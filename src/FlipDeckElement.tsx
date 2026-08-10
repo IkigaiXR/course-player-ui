@@ -77,7 +77,8 @@ export const FlipDeckElement = ({
         {cards.map((card: any, i: number) => (
           <div
             key={i}
-            className="h-[450px] perspective-1000 cursor-pointer group"
+            className="h-[450px] cursor-pointer group"
+            style={{ perspective: '1000px' }}
             onClick={() => {
               setFlipped({ ...flipped, [i]: !flipped[i] });
               setEverFlipped(prev => prev.has(i) ? prev : new Set(prev).add(i));

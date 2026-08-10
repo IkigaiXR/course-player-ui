@@ -100,6 +100,16 @@ export const TextElement = ({
         show_footnote: true
     };
 
+    // Full-width overlay darkness (0-100, author-controlled via ImageLayoutControls).
+    // 50 reproduces the original fixed gradient (0.9/0.6 alpha stops) exactly, so
+    // existing content that predates this control renders unchanged; below 50
+    // lightens the overlay toward a fully visible image, above 50 darkens it
+    // toward solid black.
+    const overlayDarkness = typeof config.overlay_darkness === 'number' ? config.overlay_darkness : 50;
+    const overlayStrength = overlayDarkness / 50;
+    const overlayFromAlpha = Math.min(1, 0.9 * overlayStrength);
+    const overlayViaAlpha = Math.min(1, 0.6 * overlayStrength);
+
     const { 
         title, 
         subheading, 
@@ -299,7 +309,10 @@ export const TextElement = ({
                 /* FULL-WIDTH IMAGE, KEY POINTS OVERLAID — opt-in via layout_config */
                 <section className="relative min-h-[600px] flex items-center py-24 mb-20 overflow-hidden">
                     <img src={imageUrl} className="absolute inset-0 w-full h-full object-cover" alt={content.imageAlt || "Technical Node Visual"} />
-                    <div className="absolute inset-0 bg-gradient-to-r from-[#0B1120]/90 via-[#0B1120]/60 to-transparent" />
+                    <div
+                        className="absolute inset-0"
+                        style={{ backgroundImage: `linear-gradient(to right, rgba(11,17,32,${overlayFromAlpha}), rgba(11,17,32,${overlayViaAlpha}) 50%, rgba(11,17,32,0) 100%)` }}
+                    />
                     <div className="relative z-10 max-w-2xl px-12 md:px-20 space-y-10">
                         {hasBullets && (
                         <>

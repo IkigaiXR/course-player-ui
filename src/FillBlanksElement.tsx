@@ -166,7 +166,7 @@ export const FillBlanksElement = ({
                         type="button"
                         onClick={() => handleBankClick(word)}
                         className={`
-                            px-6 py-3 md:px-8 md:py-4 font-black uppercase text-xs md:text-sm
+                            px-6 py-3.5 md:px-8 md:py-5 font-black uppercase text-xs md:text-sm
                             transition-all flex items-center gap-3 border-2
                             cursor-pointer select-none touch-manipulation
                             ${isSelected
