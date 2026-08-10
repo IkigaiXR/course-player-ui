@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { ShieldCheck, RefreshCcw, Zap, XCircle, MousePointer2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LMS_THEME } from './theme';
@@ -26,6 +27,7 @@ export const FillBlanksElement = ({
 
   const { title, subheading, htmlContent, sentence, distractors } = content;
   const { colors } = LMS_THEME;
+  const t = useTranslations('FillBlanksElement');
 
   // 1. SYNTAX PARSING
   const parts: string[] = (sentence || "").split(/\[(.*?)\]/g);
@@ -74,7 +76,7 @@ export const FillBlanksElement = ({
       setIsFinished(true);
       if (onComplete) onComplete();
     } else {
-      setFeedback({ type: 'error', text: 'Protocol Breach: Try Again' });
+      setFeedback({ type: 'error', text: t('protocolBreach') });
       setTimeout(() => setFeedback(null), 2000);
     }
   };
@@ -84,13 +86,13 @@ export const FillBlanksElement = ({
         <div className="p-10 md:p-16 border-l-[16px] bg-white shadow-2xl space-y-8" style={{ borderColor: colors.success }}>
             <div className="flex items-center gap-4" style={{ color: colors.success }}>
                 <ShieldCheck size={32} />
-                <h2 style={{ ...LMS_THEME.type.resultHeader, color: colors.heading, margin: 0 }}>Correct!</h2>
+                <h2 style={{ ...LMS_THEME.type.resultHeader, color: colors.heading, margin: 0 }}>{t('correct')}</h2>
             </div>
             <div className="border-t border-slate-100 pt-10" style={{ ...LMS_THEME.type.quote, color: colors.body }}>
                 <p>"{sentence.replace(/\[/g, '').replace(/\]/g, '')}"</p>
             </div>
             <button onClick={() => { setSlots({}); setIsFinished(false); }} className="flex items-center gap-3 text-slate-400 font-black uppercase text-[10px] tracking-widest hover:text-blue-600 transition-all bg-transparent border-none cursor-pointer">
-                <RefreshCcw size={14}/> Reset Interaction
+                <RefreshCcw size={14}/> {t('resetInteraction')}
             </button>
         </div>
     </div>
@@ -137,7 +139,7 @@ export const FillBlanksElement = ({
                         </motion.span>
                     ) : (
                         <span className="text-slate-200 text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
-                            <MousePointer2 size={12} /> Tap Slot
+                            <MousePointer2 size={12} /> {t('tapSlot')}
                         </span>
                     )}
                 </button>
@@ -157,7 +159,7 @@ export const FillBlanksElement = ({
 
         {/* WORD BANK */}
         <div className="p-8 md:p-12 shadow-2xl flex flex-wrap justify-center gap-4 md:gap-6 relative" style={{ backgroundColor: colors.darkPanel }}>
-            <div className="absolute top-3 left-6 text-[8px] font-black text-white/30 uppercase tracking-[0.5em]">Available Options</div>
+            <div className="absolute top-3 left-6 text-[8px] font-black text-white/30 uppercase tracking-[0.5em]">{t('availableOptions')}</div>
             {wordBank.map((word: string, i: number) => {
                 const isSelected = selectedWord === word;
                 return (
@@ -191,7 +193,7 @@ export const FillBlanksElement = ({
                 className={`w-full py-6 md:py-8 font-black uppercase text-xl md:text-2xl tracking-widest transition-all shadow-2xl flex items-center justify-center gap-4 border-none cursor-pointer ${Object.keys(slots).length === correctAnswers.length ? 'text-white hover:brightness-110' : 'bg-slate-100 text-slate-300 cursor-not-allowed'}`}
                 style={Object.keys(slots).length === correctAnswers.length ? { backgroundColor: colors.accent } : undefined}
             >
-                Check Answers <ShieldCheck size={24} />
+                {t('checkAnswers')} <ShieldCheck size={24} />
             </button>
         </div>
     </div>

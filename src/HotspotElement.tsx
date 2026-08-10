@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Target, CheckCircle2 } from 'lucide-react';
 import { LMS_THEME } from './theme';
@@ -24,6 +25,7 @@ export const HotspotElement = ({
   const [viewed, setViewed] = useState<Set<number>>(new Set());
   const [isFinished, setIsFinished] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
+  const t = useTranslations('HotspotElement');
 
   const mode = content.mode || 'hotspot'; // Handles the flip from the editor
   const spots = content.spots || [];
@@ -86,7 +88,7 @@ export const HotspotElement = ({
             <img
               src={content.imageUrl}
               className="w-full h-auto select-none pointer-events-none"
-              alt={content.imageAlt || "Technical Scene"}
+              alt={content.imageAlt || t('sceneAlt')}
               onError={() => setImageFailed(true)}
             />
 
@@ -132,7 +134,7 @@ export const HotspotElement = ({
                     <p className="text-slate-600 text-2xl leading-relaxed font-medium border-l-8 border-slate-100 pl-10 mb-12">"{active.text}"</p>
 
                     <button onClick={() => setActive(null)} className="w-full py-6 text-white font-black uppercase text-[10px] tracking-widest hover:brightness-110 shadow-xl border-none cursor-pointer" style={{ backgroundColor: colors.heading }}>
-                        {mode === 'hazard' ? 'Continue Audit' : 'Return to Scene'}
+                        {mode === 'hazard' ? t('continueAudit') : t('returnToScene')}
                     </button>
                 </motion.div>
                 </motion.div>
@@ -141,14 +143,16 @@ export const HotspotElement = ({
         </div>
       ) : (
         <div className="p-40 border-4 border-dashed border-slate-100 text-center text-slate-200 font-black uppercase tracking-[0.4em]">
-          {imageFailed ? 'Scene Image Failed to Load' : 'Awaiting Technical Asset...'}
+          {imageFailed ? t('sceneFailedToLoad') : t('awaitingAsset')}
         </div>
       )}
 
       <div className="flex items-center gap-3 justify-center opacity-20 mt-10">
          <Target size={14} className="text-slate-400" />
          <span className="text-[10px] font-black uppercase tracking-[0.5em] text-slate-500">
-             {viewed.size} / {spots.length} Hazards found
+             {mode === 'hazard'
+               ? t('hazardsFound', { found: viewed.size, total: spots.length })
+               : t('pointsFound', { found: viewed.size, total: spots.length })}
          </span>
       </div>
     </div>

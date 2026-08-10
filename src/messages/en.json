@@ -1,0 +1,135 @@
+{
+  "BranchElement": {
+    "choosePath": "Choose this path",
+    "awaitingOptions": "Awaiting decision options...",
+    "step": "Step {current} / {total}",
+    "nodePending": "Node Type [{type}] Pending...",
+    "prev": "Prev",
+    "finishPath": "Finish Path",
+    "continue": "Continue"
+  },
+  "CarouselElement": {
+    "awaitingPhases": "Awaiting Carousel Phases...",
+    "phaseVisualAlt": "Phase Visual Node",
+    "phaseLabel": "PHASE 0{n}",
+    "deploymentSequence": "Deployment Sequence",
+    "previous": "Previous",
+    "authoriseModule": "Authorise Module",
+    "nextPhase": "Next Phase"
+  },
+  "CloseoutElement": {
+    "brandingAlt": "Infrastructure Branding",
+    "titleFallback": "COMPLETE",
+    "verifiedGrade": "Verified Attainment Grade",
+    "coursePassed": "Course Passed",
+    "certificateAssigned": "Certificate Assigned to Your Dashboard",
+    "htmlFallback": "Technical performance satisfies the prerequisite requirements for this authorised learning node.",
+    "takeawaysVisualAlt": "Takeaways Visual",
+    "takeawayPlaceholder": "Takeaway node visual",
+    "keyTakeaways": "Key Takeaways",
+    "objectivesFallback": "Demonstrated Hazard Mastery",
+    "incidentFallback": "Final Lead Instructor technical statement regarding demonstrated competence.",
+    "yourNextStep": "Your Next Step",
+    "recommendedNextCourse": "Recommended Next Course",
+    "pathwayNextFallback": "T2 Advanced Modules",
+    "terminalVisualAlt": "Terminal Node Visual"
+  },
+  "GlossaryTerm": {
+    "definition": "Definition"
+  },
+  "HotspotElement": {
+    "sceneAlt": "Technical Scene",
+    "continueAudit": "Continue Audit",
+    "returnToScene": "Return to Scene",
+    "sceneFailedToLoad": "Scene Image Failed to Load",
+    "awaitingAsset": "Awaiting Technical Asset...",
+    "hazardsFound": "{found} / {total} Hazards found",
+    "pointsFound": "{found} / {total} Points found"
+  },
+  "QuizElement": {
+    "awaitingAssessment": "Awaiting assessment nodes...",
+    "wellDone": "Well Done!",
+    "passedMessage": "You have successfully passed this module! Score: {score}%.",
+    "successRecorded": "Success Recorded",
+    "tryAgain": "Try Again",
+    "failMessage": "Score: {score}%. A minimum score of {passScore}% is required to authorize this node.",
+    "retakeQuiz": "Retake Quiz",
+    "questionCounter": "Question {current} / {total}",
+    "submit": "Submit",
+    "correct": "Correct",
+    "incorrect": "Incorrect",
+    "nextQuestion": "Next Question",
+    "processFinalResult": "Process Final Result"
+  },
+  "SortingElement": {
+    "wellDone": "Well Done!",
+    "closeoutFallback": "Task successfully completed.",
+    "restartAssessment": "Restart Assessment",
+    "instructionFallback": "Logic Classification",
+    "correct": "Correct",
+    "incorrect": "Incorrect",
+    "tapToAssign": "Tap to Assign",
+    "wordOptions": "Word Options",
+    "sortedCounter": "{sorted} / {total} Sorted",
+    "loading": "Loading..."
+  },
+  "VideoElement": {
+    "playVideo": "Play video",
+    "awaitingVideo": "Awaiting video asset authorisation..."
+  },
+  "WelcomeElement": {
+    "heroAlt": "Hero",
+    "titleFallback": "WELCOME",
+    "briefingFallback": "Initialising briefing...",
+    "learningObjectives": "Learning Objectives",
+    "objectivesFallback": "Node Authorisation Required",
+    "outcomesAlt": "Outcomes",
+    "visualNodeRequired": "Visual Node Required",
+    "assessmentInformation": "Assessment Information",
+    "awaitingAssessmentNarrative": "Awaiting Assessment Narrative",
+    "passRequirements": "Pass Requirements",
+    "overallScore": "Overall Score:",
+    "partAMin": "Part A Min:",
+    "partBMin": "Part B Min:",
+    "caseStudy": "Case Study",
+    "learningPathwayInfo": "Learning Pathway Info",
+    "suggestedPrerequisites": "Suggested Prerequisites",
+    "prereqsFallback": "Open Access",
+    "recommendedNextCourse": "Recommended Next Course",
+    "pathwayNextFallback": "T1 Advanced"
+  },
+  "FlipDeckElement": {
+    "awaitingCards": "Awaiting card node authorisation...",
+    "cardsRevealed": "{revealed} / {total} cards revealed"
+  },
+  "FillBlanksElement": {
+    "protocolBreach": "Protocol Breach: Try Again",
+    "correct": "Correct!",
+    "resetInteraction": "Reset Interaction",
+    "tapSlot": "Tap Slot",
+    "availableOptions": "Available Options",
+    "checkAnswers": "Check Answers"
+  },
+  "TextElement": {
+    "brandingAlt": "Infrastructure Branding",
+    "titleFallback": "WELCOME",
+    "narrativeFallback": "Initialising technical narrative...",
+    "learningOutcomes": "Learning Outcomes",
+    "objectivesFallback": "Authorise safety matrix",
+    "objectivesVisualAlt": "Objectives Visual",
+    "awaitingObjectivesMedia": "Awaiting Objectives Media",
+    "incidentReconstruction": "Incident Reconstruction",
+    "pathwayAuthority": "Pathway Authority",
+    "recommendedPrerequisites": "Recommended Prerequisites",
+    "prereqsFallback": "NONE AUTHORISED",
+    "futureCareerNodes": "Future Career Nodes",
+    "pathwayNextFallback": "T2 ADVANCED",
+    "finalNodeVisualAlt": "Final Node Visual",
+    "technicalNodeVisualAlt": "Technical Node Visual",
+    "keyPoints": "Key Points",
+    "revealNextPoint": "Reveal Next Point ({revealed}/{total})",
+    "quickRecall": "Quick Recall",
+    "revealAnswer": "Reveal Answer",
+    "note": "Note"
+  }
+}

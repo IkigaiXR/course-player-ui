@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { LMS_THEME } from './theme';
@@ -14,6 +15,7 @@ import { LMS_THEME } from './theme';
  */
 export function GlossaryTerm({ term, definition, children }: { term: string, definition: string, children: React.ReactNode }) {
     const [isOpen, setIsOpen] = useState(false);
+    const t = useTranslations('GlossaryTerm');
     const { colors } = LMS_THEME;
 
     return (
@@ -40,7 +42,7 @@ export function GlossaryTerm({ term, definition, children }: { term: string, def
                             style={{ backgroundColor: colors.darkPanel, border: `1px solid ${colors.accent}4D` }}
                         >
                             <span className="flex justify-between items-start mb-3 w-full">
-                                <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: colors.accentMuted }}>Definition</span>
+                                <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: colors.accentMuted }}>{t('definition')}</span>
                                 <X size={14} className="text-slate-500 cursor-pointer hover:text-white transition-colors" onClick={() => setIsOpen(false)} />
                             </span>
                             <span className="text-sm font-black uppercase italic mb-2 leading-none block text-white">

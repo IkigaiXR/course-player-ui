@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { motion } from 'framer-motion';
 import { RotateCcw } from 'lucide-react';
 import { LMS_THEME } from './theme';
@@ -24,6 +25,7 @@ export const FlipDeckElement = ({
   const [everFlipped, setEverFlipped] = useState<Set<number>>(new Set());
 
   const { colors, type } = LMS_THEME;
+  const t = useTranslations('FlipDeckElement');
 
   const cards = content?.cards || [];
 
@@ -126,7 +128,7 @@ export const FlipDeckElement = ({
       {/* EMPTY STATE NODE */}
       {cards.length === 0 && (
           <div className="p-32 border-4 border-dashed border-slate-100 text-center text-slate-200 font-black uppercase tracking-widest italic text-2xl">
-            Awaiting card node authorisation...
+            {t('awaitingCards')}
           </div>
       )}
 
@@ -134,7 +136,7 @@ export const FlipDeckElement = ({
       {cards.length > 0 && (
         <div className="flex items-center justify-center gap-3 mt-12 opacity-60">
             <span style={{ ...type.label, color: colors.body }}>
-                {everFlipped.size} / {cards.length} cards revealed
+                {t('cardsRevealed', { revealed: everFlipped.size, total: cards.length })}
             </span>
         </div>
       )}

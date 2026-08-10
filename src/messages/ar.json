@@ -1,0 +1,135 @@
+{
+  "BranchElement": {
+    "choosePath": "اختر هذا المسار",
+    "awaitingOptions": "في انتظار خيارات القرار...",
+    "step": "الخطوة {current} / {total}",
+    "nodePending": "نوع الخطوة [{type}] قيد الانتظار...",
+    "prev": "السابق",
+    "finishPath": "إنهاء المسار",
+    "continue": "استمرار"
+  },
+  "CarouselElement": {
+    "awaitingPhases": "في انتظار مراحل العرض...",
+    "phaseVisualAlt": "صورة المرحلة",
+    "phaseLabel": "المرحلة 0{n}",
+    "deploymentSequence": "تسلسل التنفيذ",
+    "previous": "السابق",
+    "authoriseModule": "تأكيد إتمام الوحدة",
+    "nextPhase": "المرحلة التالية"
+  },
+  "CloseoutElement": {
+    "brandingAlt": "شعار الجهة",
+    "titleFallback": "مكتمل",
+    "verifiedGrade": "درجة الإنجاز المعتمدة",
+    "coursePassed": "تم إنجاز الدورة بنجاح",
+    "certificateAssigned": "تمت إضافة الشهادة إلى لوحتك الرئيسية",
+    "htmlFallback": "يفي الأداء الفني بالمتطلبات الأساسية لهذه الخطوة التعليمية المعتمدة.",
+    "takeawaysVisualAlt": "صورة الخلاصة",
+    "takeawayPlaceholder": "صورة الخلاصة غير متاحة",
+    "keyTakeaways": "أهم النقاط",
+    "objectivesFallback": "إثبات إتقان التعامل مع المخاطر",
+    "incidentFallback": "بيان فني ختامي من كبير المدربين حول الكفاءة المثبتة.",
+    "yourNextStep": "خطوتك التالية",
+    "recommendedNextCourse": "الدورة التالية المقترحة",
+    "pathwayNextFallback": "وحدات المستوى الثاني المتقدمة",
+    "terminalVisualAlt": "صورة ختامية"
+  },
+  "GlossaryTerm": {
+    "definition": "التعريف"
+  },
+  "HotspotElement": {
+    "sceneAlt": "صورة الموقع",
+    "continueAudit": "الاستمرار في الفحص",
+    "returnToScene": "العودة إلى الصورة",
+    "sceneFailedToLoad": "فشل تحميل صورة الموقع",
+    "awaitingAsset": "في انتظار الملف الفني...",
+    "hazardsFound": "تم رصد {found} / {total} من المخاطر",
+    "pointsFound": "تم رصد {found} / {total} من النقاط"
+  },
+  "QuizElement": {
+    "awaitingAssessment": "في انتظار أسئلة التقييم...",
+    "wellDone": "أحسنت!",
+    "passedMessage": "لقد أتممت هذه الوحدة بنجاح! النتيجة: {score}٪.",
+    "successRecorded": "تم تسجيل النجاح",
+    "tryAgain": "حاول مرة أخرى",
+    "failMessage": "النتيجة: {score}٪. الحد الأدنى المطلوب للنجاح هو {passScore}٪.",
+    "retakeQuiz": "إعادة الاختبار",
+    "questionCounter": "السؤال {current} / {total}",
+    "submit": "إرسال",
+    "correct": "إجابة صحيحة",
+    "incorrect": "إجابة غير صحيحة",
+    "nextQuestion": "السؤال التالي",
+    "processFinalResult": "عرض النتيجة النهائية"
+  },
+  "SortingElement": {
+    "wellDone": "أحسنت!",
+    "closeoutFallback": "تم إتمام المهمة بنجاح.",
+    "restartAssessment": "إعادة التقييم",
+    "instructionFallback": "تصنيف منطقي",
+    "correct": "إجابة صحيحة",
+    "incorrect": "إجابة غير صحيحة",
+    "tapToAssign": "اضغط للتصنيف",
+    "wordOptions": "خيارات التصنيف",
+    "sortedCounter": "تم تصنيف {sorted} / {total}",
+    "loading": "جارٍ التحميل..."
+  },
+  "VideoElement": {
+    "playVideo": "تشغيل الفيديو",
+    "awaitingVideo": "في انتظار ملف الفيديو..."
+  },
+  "WelcomeElement": {
+    "heroAlt": "صورة الترحيب",
+    "titleFallback": "مرحباً",
+    "briefingFallback": "جارٍ تحميل الموجز...",
+    "learningObjectives": "أهداف التعلم",
+    "objectivesFallback": "يتطلب الاعتماد",
+    "outcomesAlt": "النتائج",
+    "visualNodeRequired": "الصورة غير متاحة",
+    "assessmentInformation": "معلومات التقييم",
+    "awaitingAssessmentNarrative": "وصف التقييم غير متاح",
+    "passRequirements": "متطلبات النجاح",
+    "overallScore": "النتيجة الإجمالية:",
+    "partAMin": "الحد الأدنى للجزء أ:",
+    "partBMin": "الحد الأدنى للجزء ب:",
+    "caseStudy": "دراسة حالة",
+    "learningPathwayInfo": "معلومات مسار التعلم",
+    "suggestedPrerequisites": "المتطلبات المسبقة المقترحة",
+    "prereqsFallback": "بدون متطلبات مسبقة",
+    "recommendedNextCourse": "الدورة التالية المقترحة",
+    "pathwayNextFallback": "المستوى الأول المتقدم"
+  },
+  "FlipDeckElement": {
+    "awaitingCards": "في انتظار بطاقات المحتوى...",
+    "cardsRevealed": "تم كشف {revealed} / {total} من البطاقات"
+  },
+  "FillBlanksElement": {
+    "protocolBreach": "إجابة غير صحيحة، حاول مرة أخرى",
+    "correct": "إجابة صحيحة!",
+    "resetInteraction": "إعادة المحاولة",
+    "tapSlot": "اضغط هنا",
+    "availableOptions": "الخيارات المتاحة",
+    "checkAnswers": "تحقق من الإجابات"
+  },
+  "TextElement": {
+    "brandingAlt": "شعار الجهة",
+    "titleFallback": "مرحباً",
+    "narrativeFallback": "جارٍ تحميل المحتوى الفني...",
+    "learningOutcomes": "مخرجات التعلم",
+    "objectivesFallback": "يتطلب اعتماد مصفوفة السلامة",
+    "objectivesVisualAlt": "صورة الأهداف",
+    "awaitingObjectivesMedia": "صورة الأهداف غير متاحة",
+    "incidentReconstruction": "إعادة تمثيل الحادث",
+    "pathwayAuthority": "مسار التعلم",
+    "recommendedPrerequisites": "المتطلبات المسبقة الموصى بها",
+    "prereqsFallback": "لا توجد متطلبات مسبقة",
+    "futureCareerNodes": "المسارات المهنية المستقبلية",
+    "pathwayNextFallback": "المستوى الثاني المتقدم",
+    "finalNodeVisualAlt": "الصورة الختامية",
+    "technicalNodeVisualAlt": "الصورة الفنية",
+    "keyPoints": "النقاط الرئيسية",
+    "revealNextPoint": "إظهار النقطة التالية ({revealed}/{total})",
+    "quickRecall": "استرجاع سريع",
+    "revealAnswer": "إظهار الإجابة",
+    "note": "ملاحظة"
+  }
+}

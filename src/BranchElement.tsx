@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { ChevronLeft, ChevronRight, GitBranch } from 'lucide-react';
 import { LMS_THEME } from './theme';
 
@@ -43,6 +44,7 @@ export const BranchElement = ({
   stepTypeMap: Record<string, React.ComponentType<any>>,
   isPassiveStep: (step: any) => boolean
 }) => {
+  const t = useTranslations('BranchElement');
   const { colors, type } = LMS_THEME;
   const options = content?.options || [];
 
@@ -133,7 +135,7 @@ export const BranchElement = ({
             >
               <div className="flex items-center gap-3 mb-4" style={{ color: colors.accent }}>
                 <GitBranch size={18} />
-                <span className="text-[9px] font-black uppercase tracking-[0.3em]">Choose this path</span>
+                <span className="text-[9px] font-black uppercase tracking-[0.3em]">{t('choosePath')}</span>
               </div>
               <p style={{ ...type.h3, color: colors.heading, margin: 0 }} className="group-hover:translate-x-1 transition-transform">
                 {opt.text}
@@ -144,7 +146,7 @@ export const BranchElement = ({
 
         {options.length === 0 && (
           <div className="p-32 border-4 border-dashed border-slate-100 text-center text-slate-200 font-black uppercase tracking-widest italic text-2xl">
-            Awaiting decision options...
+            {t('awaitingOptions')}
           </div>
         )}
       </div>
@@ -169,7 +171,7 @@ export const BranchElement = ({
       <div className="flex items-center gap-3 mb-10 opacity-60">
         <GitBranch size={14} style={{ color: colors.accent }} />
         <span className="text-[9px] font-black uppercase tracking-[0.3em]" style={{ color: colors.body }}>
-          {selectedOption?.text} &middot; Step {subIndex + 1} / {pathSteps.length}
+          {selectedOption?.text} &middot; {t('step', { current: subIndex + 1, total: pathSteps.length })}
         </span>
       </div>
 
@@ -177,7 +179,7 @@ export const BranchElement = ({
         <Component content={pathStepContent} template={template} enrollmentId={enrollmentId} onComplete={handleSubStepComplete} />
       ) : (
         <div className="py-20 text-center border-4 border-dashed border-slate-100 opacity-20 italic uppercase font-black text-xs">
-          Node Type [{currentPathStep.type}] Pending...
+          {t('nodePending', { type: currentPathStep.type })}
         </div>
       )}
 
@@ -187,7 +189,7 @@ export const BranchElement = ({
           disabled={subIndex === 0}
           className="flex items-center gap-2 font-black text-slate-400 hover:text-[#0B1120] disabled:opacity-0 uppercase text-[10px] tracking-widest transition-all italic"
         >
-          <ChevronLeft size={14} /> Prev
+          <ChevronLeft size={14} /> {t('prev')}
         </button>
         <button
           onClick={handleSubNext}
@@ -195,7 +197,7 @@ export const BranchElement = ({
           className={`px-10 py-4 font-black italic uppercase text-sm transition-all shadow-xl active:scale-95 ${subStepValid ? 'text-white hover:brightness-110' : 'bg-slate-100 text-slate-300 cursor-not-allowed'}`}
           style={subStepValid ? { backgroundColor: colors.heading } : undefined}
         >
-          {subIndex >= pathSteps.length - 1 ? 'Finish Path' : 'Continue'}
+          {subIndex >= pathSteps.length - 1 ? t('finishPath') : t('continue')}
         </button>
       </div>
     </div>

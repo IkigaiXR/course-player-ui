@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   ShieldCheck,
   CheckCircle2,
@@ -34,6 +35,7 @@ export const SortingElement = ({
 
   const { instruction, subheading, htmlContent, closeoutText, categories, items: rawItems } = content;
   const { colors, type } = LMS_THEME;
+  const t = useTranslations('SortingElement');
   const totalItems = rawItems?.length || 0;
 
   useEffect(() => {
@@ -81,19 +83,19 @@ export const SortingElement = ({
         <div className="p-10 md:p-16 border-l-[16px] bg-white shadow-2xl space-y-8" style={{ borderColor: colors.success }}>
            <div className="flex items-center gap-4" style={{ color: colors.success }}>
               <ShieldCheck size={48} />
-              <h2 style={{ ...type.resultHeader, color: colors.heading, margin: 0 }}>Well Done!</h2>
+              <h2 style={{ ...type.resultHeader, color: colors.heading, margin: 0 }}>{t('wellDone')}</h2>
            </div>
            <div
                 className="prose prose-slate max-w-none font-medium leading-relaxed"
                 style={{ fontSize: type.body.fontSize, color: colors.body }}
-                dangerouslySetInnerHTML={{ __html: closeoutText || "Task successfully completed." }}
+                dangerouslySetInnerHTML={{ __html: closeoutText || t('closeoutFallback') }}
             />
         </div>
         <button
             onClick={() => { setItems(rawItems.map((it: any, idx: number) => ({ ...it, id: `it-${idx}` }))); setIsFinished(false); }}
             className="flex items-center gap-3 text-slate-400 font-black uppercase text-[10px] tracking-widest hover:text-blue-600 bg-transparent border-none cursor-pointer transition-colors"
         >
-            <RefreshCcw size={14}/> Restart Assessment
+            <RefreshCcw size={14}/> {t('restartAssessment')}
         </button>
     </div>
   );
@@ -104,7 +106,7 @@ export const SortingElement = ({
       {/* 1. HEADERS (Standardized) */}
       <div className="mb-10">
         <h1 style={{ ...type.h2, color: colors.heading, margin: 0 }}>
-            {instruction || 'Logic Classification'}
+            {instruction || t('instructionFallback')}
         </h1>
       </div>
 
@@ -156,7 +158,7 @@ export const SortingElement = ({
                     className="flex flex-col items-center gap-3"
                   >
                     <CheckCircle2 size={44} className="text-emerald-500" />
-                    <span style={{ ...type.label, color: '#059669' }}>Correct</span>
+                    <span style={{ ...type.label, color: '#059669' }}>{t('correct')}</span>
                   </motion.div>
                 ) : feedback === 'error' ? (
                   <motion.div
@@ -166,7 +168,7 @@ export const SortingElement = ({
                     className="flex flex-col items-center gap-3"
                   >
                     <XCircle size={44} className="text-red-500" />
-                    <span style={{ ...type.label, color: '#dc2626' }}>Incorrect</span>
+                    <span style={{ ...type.label, color: '#dc2626' }}>{t('incorrect')}</span>
                   </motion.div>
                 ) : (
                   <motion.div
@@ -188,7 +190,7 @@ export const SortingElement = ({
                         className="mt-4 inline-block px-3 py-1 border"
                         style={{ ...type.label, color: colors.accent, borderColor: colors.accent }}
                       >
-                        Tap to Assign
+                        {t('tapToAssign')}
                       </motion.p>
                     )}
                   </motion.div>
@@ -202,11 +204,11 @@ export const SortingElement = ({
       {/* 3. ITEM RESERVOIR */}
       <div className="p-8 md:p-12 shadow-xl flex flex-wrap justify-center gap-4 min-h-[180px] items-center relative" style={{ backgroundColor: colors.darkPanel }}>
         <div style={{ ...type.label, color: 'rgba(255,255,255,0.3)' }} className="absolute top-4 left-6">
-          Word Options
+          {t('wordOptions')}
         </div>
         {totalItems > 0 && (
           <div style={{ ...type.label, color: 'rgba(255,255,255,0.3)' }} className="absolute top-4 right-6">
-            {totalItems - items.length} / {totalItems} Sorted
+            {t('sortedCounter', { sorted: totalItems - items.length, total: totalItems })}
           </div>
         )}
 
@@ -253,7 +255,7 @@ export const SortingElement = ({
 
         {items.length === 0 && !isFinished && (
             <div className="flex flex-col items-center gap-4 text-slate-500 uppercase font-bold text-xs animate-pulse">
-                <RotateCcw className="animate-spin" size={20} /> Loading...
+                <RotateCcw className="animate-spin" size={20} /> {t('loading')}
             </div>
         )}
       </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import parse, { domToReact, HTMLReactParserOptions } from 'html-react-parser';
 import { Zap, FileText, ShieldAlert, Briefcase, ShieldCheck, ChevronDown, HelpCircle } from 'lucide-react';
 import { LMS_THEME, getGridTemplate } from './theme';
@@ -76,6 +77,8 @@ export const TextElement = ({
     isWelcome?: boolean,
     onComplete?: () => void
 }) => {
+    const t = useTranslations('TextElement');
+
     if (!content) return null;
 
     // --- 1. DESIGN AUTHORITY: BRANDING INHERITANCE ---
@@ -173,12 +176,12 @@ export const TextElement = ({
                     
                     {branding.logo_url && (
                         <div className="mb-10 opacity-60">
-                            <img src={branding.logo_url} className="h-12 w-auto object-contain" alt="Infrastructure Branding" />
+                            <img src={branding.logo_url} className="h-12 w-auto object-contain" alt={t('brandingAlt')} />
                         </div>
                     )}
 
                     <header className="border-b-[24px] pb-10" style={{ borderColor: branding.h1.color }}>
-                        <h1 style={{ 
+                        <h1 style={{
                             fontFamily: branding.h1.font,
                             fontSize: branding.h1.size,
                             fontWeight: branding.h1.weight,
@@ -190,7 +193,7 @@ export const TextElement = ({
                             textTransform: 'none',
                             margin: 0
                         }}>
-                            {title || "WELCOME"}
+                            {title || t('titleFallback')}
                         </h1>
                     </header>
 
@@ -212,29 +215,29 @@ export const TextElement = ({
                         <div 
                             className="prose prose-slate prose-2xl max-w-none font-light leading-relaxed prose-p:mb-8" 
                             style={{ color: branding.body.color, fontSize: branding.body.size, marginBottom: branding.spacing.body_margin }}
-                            dangerouslySetInnerHTML={{ __html: htmlContent || "<p>Initialising technical narrative...</p>" }} 
+                            dangerouslySetInnerHTML={{ __html: htmlContent || `<p>${t('narrativeFallback')}</p>` }}
                         />
                     </section>
 
                     {/* Node 0: Outcomes Grid (Auto-Fit Enabled) */}
                     <section className={`grid grid-cols-1 lg:grid-cols-2 gap-20 items-stretch border-y border-slate-100 py-24 ${config.welcome_bullet_align === 'right' ? 'flex-row-reverse' : ''}`}>
                         <div className={`flex flex-col justify-center ${config.welcome_bullet_align === 'right' ? 'order-2' : 'order-1'}`}>
-                            <span className="text-[11px] font-black uppercase tracking-[0.5em] text-[#69C0FF] block mb-10">Learning Outcomes</span>
-                            <div 
-                                className="prose prose-slate prose-xl max-w-none font-bold uppercase italic pl-8" 
+                            <span className="text-[11px] font-black uppercase tracking-[0.5em] text-[#69C0FF] block mb-10">{t('learningOutcomes')}</span>
+                            <div
+                                className="prose prose-slate prose-xl max-w-none font-bold uppercase italic pl-8"
                                 style={{ borderLeft: `${branding.bullets.weight} solid ${branding.bullets.color}`, marginTop: branding.spacing.list_margin }}
-                                dangerouslySetInnerHTML={{ __html: objectivesHtml || "<ul><li>Authorise safety matrix</li></ul>" }} 
+                                dangerouslySetInnerHTML={{ __html: objectivesHtml || `<ul><li>${t('objectivesFallback')}</li></ul>` }}
                             />
                         </div>
                         <div className={`flex border-[16px] border-white shadow-2xl bg-slate-50 overflow-hidden ${config.welcome_bullet_align === 'right' ? 'order-1' : 'order-2'}`}>
                             {objectivesImage ? (
-                                <img 
-                                    src={objectivesImage} 
-                                    className={`w-full h-full ${config.image_fit === 'cover' ? 'object-cover' : 'object-contain'}`} 
-                                    alt="Objectives Visual" 
+                                <img
+                                    src={objectivesImage}
+                                    className={`w-full h-full ${config.image_fit === 'cover' ? 'object-cover' : 'object-contain'}`}
+                                    alt={t('objectivesVisualAlt')}
                                 />
                             ) : (
-                                <div className="w-full h-full flex items-center justify-center text-slate-200 font-black uppercase text-[10px]">Awaiting Objectives Media</div>
+                                <div className="w-full h-full flex items-center justify-center text-slate-200 font-black uppercase text-[10px]">{t('awaitingObjectivesMedia')}</div>
                             )}
                         </div>
                     </section>
@@ -243,7 +246,7 @@ export const TextElement = ({
                         <section className="border-l-[16px] p-16 space-y-8 shadow-sm" style={{ backgroundColor: branding.incident.bg, borderColor: branding.incident.border }}>
                             <div className="flex items-center gap-4 text-red-700">
                                 <ShieldAlert size={32} />
-                                <h4 className="text-2xl font-black uppercase italic tracking-widest leading-none m-0">Incident Reconstruction</h4>
+                                <h4 className="text-2xl font-black uppercase italic tracking-widest leading-none m-0">{t('incidentReconstruction')}</h4>
                             </div>
                             <div className="prose prose-red prose-xl max-w-none italic font-medium leading-relaxed" style={{ color: branding.incident.text, fontSize: branding.incident.size }} dangerouslySetInnerHTML={{ __html: incidentHtml }} />
                         </section>
@@ -253,16 +256,16 @@ export const TextElement = ({
                         <section className="p-16 shadow-2xl space-y-12" style={{ backgroundColor: branding.pathway.bg }}>
                             <div className="flex items-center gap-4" style={{ color: branding.pathway.text }}>
                                 <div className="w-2 h-2 rounded-none" style={{ backgroundColor: branding.pathway.text }} />
-                                <span className="text-[11px] font-black uppercase tracking-[0.5em]">Pathway Authority</span>
+                                <span className="text-[11px] font-black uppercase tracking-[0.5em]">{t('pathwayAuthority')}</span>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
                                 <div className="space-y-4">
-                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Recommended Prerequisites</p>
-                                    <p className="font-black uppercase italic tracking-tighter" style={{ color: branding.pathway.text, fontSize: branding.pathway.size }}>{pathwayPrereqs || "NONE AUTHORISED"}</p>
+                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{t('recommendedPrerequisites')}</p>
+                                    <p className="font-black uppercase italic tracking-tighter" style={{ color: branding.pathway.text, fontSize: branding.pathway.size }}>{pathwayPrereqs || t('prereqsFallback')}</p>
                                 </div>
                                 <div className="space-y-4">
-                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Future Career Nodes</p>
-                                    <p className="text-2xl font-black uppercase italic tracking-tighter text-white">{pathwayNext || "T2 ADVANCED"}</p>
+                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{t('futureCareerNodes')}</p>
+                                    <p className="text-2xl font-black uppercase italic tracking-tighter text-white">{pathwayNext || t('pathwayNextFallback')}</p>
                                 </div>
                             </div>
                         </section>
@@ -270,7 +273,7 @@ export const TextElement = ({
 
                     {imageUrl && (
                         <section className="w-full border-[24px] border-white shadow-2xl overflow-hidden bg-slate-100">
-                            <img src={imageUrl} className="w-full h-auto object-cover grayscale hover:grayscale-0 transition-all duration-1000" alt="Final Node Visual" />
+                            <img src={imageUrl} className="w-full h-auto object-cover grayscale hover:grayscale-0 transition-all duration-1000" alt={t('finalNodeVisualAlt')} />
                         </section>
                     )}
                 </div>
@@ -308,7 +311,7 @@ export const TextElement = ({
             {content.layout === 'full' && imageUrl ? (
                 /* FULL-WIDTH IMAGE, KEY POINTS OVERLAID — opt-in via layout_config */
                 <section className="relative min-h-[600px] flex items-center py-24 mb-20 overflow-hidden">
-                    <img src={imageUrl} className="absolute inset-0 w-full h-full object-cover" alt={content.imageAlt || "Technical Node Visual"} />
+                    <img src={imageUrl} className="absolute inset-0 w-full h-full object-cover" alt={content.imageAlt || t('technicalNodeVisualAlt')} />
                     <div
                         className="absolute inset-0"
                         style={{ backgroundImage: `linear-gradient(to right, rgba(11,17,32,${overlayFromAlpha}), rgba(11,17,32,${overlayViaAlpha}) 50%, rgba(11,17,32,0) 100%)` }}
@@ -316,7 +319,7 @@ export const TextElement = ({
                     <div className="relative z-10 max-w-2xl px-12 md:px-20 space-y-10">
                         {hasBullets && (
                         <>
-                        <span style={{ ...type.label, color: config.overlay_text_color || '#FFFFFF' }} className="block">Key Points</span>
+                        <span style={{ ...type.label, color: config.overlay_text_color || '#FFFFFF' }} className="block">{t('keyPoints')}</span>
                         {isSequential && bulletItems.length > 0 ? (
                             <div className="space-y-8">
                                 <ul className="prose max-w-none leading-relaxed font-medium list-none pl-0 m-0" style={{ fontSize: type.body.fontSize, color: config.overlay_text_color || '#FFFFFF' }}>
@@ -332,7 +335,7 @@ export const TextElement = ({
                                         className="flex items-center gap-3 px-6 py-3 font-black uppercase text-[10px] tracking-widest border-2 transition-all hover:shadow-lg cursor-pointer bg-transparent"
                                         style={{ borderColor: config.overlay_text_color || '#FFFFFF', color: config.overlay_text_color || '#FFFFFF' }}
                                     >
-                                        <ChevronDown size={14} /> Reveal Next Point ({revealedCount}/{bulletItems.length})
+                                        <ChevronDown size={14} /> {t('revealNextPoint', { revealed: revealedCount, total: bulletItems.length })}
                                     </button>
                                 )}
                             </div>
@@ -358,7 +361,7 @@ export const TextElement = ({
                     <div className={`flex flex-col justify-center space-y-10 ${config.bullet_align === 'right' ? 'order-2' : 'order-1'}`}>
                         {hasBullets && (
                         <>
-                        <span style={{ ...type.label, color: colors.accent }} className="block">Key Points</span>
+                        <span style={{ ...type.label, color: colors.accent }} className="block">{t('keyPoints')}</span>
                         {isSequential && bulletItems.length > 0 ? (
                             <div className="space-y-8">
                                 <ul className="prose prose-slate max-w-none leading-relaxed font-medium list-none pl-0 m-0" style={{ fontSize: type.body.fontSize, color: colors.body }}>
@@ -374,7 +377,7 @@ export const TextElement = ({
                                         className="flex items-center gap-3 px-6 py-3 font-black uppercase text-[10px] tracking-widest border-2 transition-all hover:shadow-lg cursor-pointer bg-transparent"
                                         style={{ borderColor: colors.accent, color: colors.accent }}
                                     >
-                                        <ChevronDown size={14} /> Reveal Next Point ({revealedCount}/{bulletItems.length})
+                                        <ChevronDown size={14} /> {t('revealNextPoint', { revealed: revealedCount, total: bulletItems.length })}
                                     </button>
                                 )}
                             </div>
@@ -397,7 +400,7 @@ export const TextElement = ({
                                 <img
                                     src={imageUrl}
                                     className={`w-full h-full transition-all duration-700 ${config.image_fit === 'cover' ? 'object-cover' : 'object-contain'}`}
-                                    alt={content.imageAlt || "Technical Node Visual"}
+                                    alt={content.imageAlt || t('technicalNodeVisualAlt')}
                                 />
                             </div>
                         )}
@@ -411,7 +414,7 @@ export const TextElement = ({
                     <div className="max-w-5xl p-16 shadow-inner space-y-6 border-l-[16px]" style={{ backgroundColor: colors.lightTint, borderColor: colors.accent }}>
                         <div className="flex items-center gap-3" style={{ color: colors.accent }}>
                             <HelpCircle size={18} />
-                            <span style={{ ...type.label, color: colors.accent }}>Quick Recall</span>
+                            <span style={{ ...type.label, color: colors.accent }}>{t('quickRecall')}</span>
                         </div>
                         <h4 style={{ ...type.h3, color: colors.heading }} className="m-0">
                             {renderWithGlossaryTerms(content.microCheck.question, glossaryTerms)}
@@ -426,7 +429,7 @@ export const TextElement = ({
                                 className="px-8 py-4 font-black uppercase text-[10px] tracking-widest text-white transition-all hover:brightness-110 cursor-pointer border-none"
                                 style={{ backgroundColor: colors.heading }}
                             >
-                                Reveal Answer
+                                {t('revealAnswer')}
                             </button>
                         )}
                     </div>
@@ -439,7 +442,7 @@ export const TextElement = ({
                     <div className="max-w-5xl p-16 shadow-inner space-y-6" style={{ backgroundColor: colors.calloutBg, borderLeft: `16px solid ${colors.heading}` }}>
                         <div className="flex items-center gap-3" style={{ color: colors.heading }}>
                             <Zap size={18} fill="currentColor" />
-                            <span style={{ ...type.label, color: colors.heading }}>Note</span>
+                            <span style={{ ...type.label, color: colors.heading }}>{t('note')}</span>
                         </div>
                         <h4 style={{ ...type.h3, color: colors.heading }} className="m-0">
                             {callout.title}

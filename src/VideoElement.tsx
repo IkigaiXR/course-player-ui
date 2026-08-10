@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Play } from 'lucide-react';
 import { LMS_THEME } from './theme';
 import { QuizElement } from './QuizElement';
@@ -25,6 +26,7 @@ export const VideoElement = ({
   const [playing, setPlaying] = useState(false);
 
   const { colors, type } = LMS_THEME;
+  const t = useTranslations('VideoElement');
 
   if (!content) return null;
 
@@ -84,7 +86,7 @@ export const VideoElement = ({
             <button
               onClick={handlePlay}
               className="absolute inset-0 flex items-center justify-center bg-[#0B1120]/40 hover:bg-[#0B1120]/60 transition-all cursor-pointer border-none"
-              aria-label="Play video"
+              aria-label={t('playVideo')}
             >
               <div className="w-20 h-20 rounded-full bg-white/90 flex items-center justify-center group-hover:scale-110 transition-transform shadow-2xl">
                 <Play size={32} style={{ color: colors.heading }} fill={colors.heading} className="ml-1" />
@@ -100,7 +102,7 @@ export const VideoElement = ({
         </div>
       ) : (
         <div className="p-32 border-4 border-dashed border-slate-100 text-center text-slate-200 font-black uppercase tracking-widest italic text-2xl aspect-video flex items-center justify-center">
-          Awaiting video asset authorisation...
+          {t('awaitingVideo')}
         </div>
       )}
 

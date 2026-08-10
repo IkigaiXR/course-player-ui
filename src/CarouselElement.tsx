@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LMS_THEME } from './theme';
@@ -20,6 +21,7 @@ export const CarouselElement = ({
   template?: any, 
   onComplete?: () => void 
 }) => {
+  const t = useTranslations('CarouselElement');
   const [idx, setIdx] = useState(0);
   const slides = content.slides || [];
   const instructionalText = content.instructionalText || "";
@@ -42,7 +44,7 @@ export const CarouselElement = ({
   if (slides.length === 0) {
       return (
         <div className="p-32 border-4 border-dashed border-slate-100 text-center text-slate-200 font-black uppercase tracking-widest italic text-2xl">
-            Awaiting Carousel Phases...
+            {t('awaitingPhases')}
         </div>
       );
   }
@@ -101,18 +103,18 @@ export const CarouselElement = ({
                     exit={{ opacity: 0, scale: 0.98 }}
                     transition={{ duration: 0.6 }}
                     className="absolute inset-0 w-full h-full object-cover"
-                    alt={slides[idx]?.imageAlt || "Phase Visual Node"}
+                    alt={slides[idx]?.imageAlt || t('phaseVisualAlt')}
                 />
             </AnimatePresence>
             <div className="absolute top-8 left-8 px-4 py-2 font-black text-[10px] uppercase tracking-widest shadow-xl text-white" style={{ backgroundColor: colors.accent }}>
-                PHASE 0{idx + 1}
+                {t('phaseLabel', { n: idx + 1 })}
             </div>
         </div>
 
         <div className="lg:w-1/2 p-12 lg:p-20 flex flex-col justify-center space-y-10 bg-white relative">
           <div className="space-y-4">
             <span style={{ ...type.label, color: colors.accent }} className="block">
-                Deployment Sequence
+                {t('deploymentSequence')}
             </span>
             <h3
                 className={`${titleScale} font-black uppercase leading-[0.9] tracking-tighter break-words`}
@@ -135,11 +137,11 @@ export const CarouselElement = ({
           {/* NAVIGATION HANDSHAKE */}
           <div className="flex gap-4 pt-10">
             <button onClick={prev} disabled={idx === 0} className="px-8 py-5 border-4 border-slate-50 text-slate-300 font-black text-[10px] uppercase disabled:opacity-0 transition-all hover:border-slate-100 whitespace-nowrap leading-none">
-                Previous
+                {t('previous')}
             </button>
             <button onClick={next} className="flex-1 py-5 text-white font-black text-[10px] uppercase tracking-widest hover:brightness-110 transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95 leading-none" style={{ backgroundColor: colors.heading }}>
                 <span className="whitespace-nowrap uppercase font-black">
-                    {idx === slides.length - 1 ? 'Authorise Module' : 'Next Phase'}
+                    {idx === slides.length - 1 ? t('authoriseModule') : t('nextPhase')}
                 </span>
                 {idx === slides.length - 1 ? <CheckCircle2 size={16} /> : <ChevronRight size={16} />}
             </button>
