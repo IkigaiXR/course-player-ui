@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Play } from 'lucide-react';
 import { LMS_THEME } from './theme';
@@ -24,15 +24,31 @@ export const VideoElement = ({
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
+  const [watchedToEnd, setWatchedToEnd] = useState(false);
 
   const { colors, type } = LMS_THEME;
   const t = useTranslations('VideoElement');
+
+  const hasQuestions = content?.questions && content.questions.length > 0;
+
+  // Videos without a knowledge check gate on reaching the end of playback —
+  // videos with questions keep gating on the embedded quiz instead (below).
+  useEffect(() => {
+    if (!hasQuestions && watchedToEnd) {
+      onComplete?.();
+    }
+  }, [hasQuestions, watchedToEnd]);
 
   if (!content) return null;
 
   const handlePlay = () => {
     setPlaying(true);
     videoRef.current?.play();
+  };
+
+  const handleEnded = () => {
+    setPlaying(false);
+    setWatchedToEnd(true);
   };
 
   return (
@@ -79,7 +95,7 @@ export const VideoElement = ({
             controls={playing}
             playsInline
             onPause={() => setPlaying(false)}
-            onEnded={() => setPlaying(false)}
+            onEnded={handleEnded}
           />
 
           {!playing && (
