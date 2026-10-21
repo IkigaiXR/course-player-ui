@@ -3,7 +3,8 @@ import { describe, it, expect, vi } from 'vitest';
 import { screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { axe } from 'jest-axe';
-import { SortingElement, PRESS_DELAY_MS } from './SortingElement';
+import { SortingElement } from './SortingElement';
+import { PRESS_DELAY_MS } from './dragInteraction';
 import { renderWithIntl, stubRect, stubScrollable } from './test/testUtils';
 
 // A real wait longer than the component's own press-delay threshold --

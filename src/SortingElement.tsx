@@ -11,9 +11,15 @@ import {
   GripVertical,
   XCircle
 } from 'lucide-react';
-import { motion, AnimatePresence, DragControls, type PanInfo } from 'framer-motion';
+import { motion, AnimatePresence, type PanInfo } from 'framer-motion';
 import { LMS_THEME } from './theme';
 import { seededShuffleBySeedKey } from './seededShuffle';
+import {
+  getEventPoint,
+  resolveTargetAtPoint,
+  useAutoScrollOnDrag,
+  usePressDelayDragControls,
+} from './dragInteraction';
 
 /**
  * Sorting / classification interaction. Drag-and-drop on every input
@@ -40,75 +46,41 @@ import { seededShuffleBySeedKey } from './seededShuffle';
  *
  * Two follow-ups from the first review pass, both in service of the same
  * goal -- not fighting the browser's native touch scrolling, which is the
- * literal, cited root cause of the previous dnd-kit failure:
+ * literal, cited root cause of the previous dnd-kit failure. Both are
+ * implemented in `./dragInteraction.ts`, shared with FillBlanksElement
+ * rather than duplicated there:
  *
- * 1. Press-delay drag activation. `touch-action: none` can't be static on
- *    the item: if it's set the instant a finger touches an item (as it was
- *    in the first pass), every swipe that merely starts on an item -- i.e.
- *    scrolling past the item reservoir on a phone -- gets captured as a
- *    drag attempt and page scroll stops working. Real touch-drag UIs
- *    (including dnd-kit's own TouchSensor, which the previous attempt did
- *    configure correctly on this exact point) solve this with a short
- *    press-delay: a touch only becomes a drag if it holds roughly in place
- *    for a brief moment, so an immediate directional swipe is left alone
- *    for the browser to scroll. That's reimplemented here manually via
- *    `dragListener={false}` + `useDragControls`, since Framer's declarative
- *    `drag` prop has no built-in delay of its own. `touch-action` itself is
- *    then only ever set to `none` once a drag has actually started
- *    (isDragging), not at rest -- see PRESS_DELAY_MS / MOVE_TOLERANCE_PX
- *    below for the values and why.
+ * 1. Press-delay drag activation (`usePressDelayDragControls`).
+ *    `touch-action: none` can't be static on the item: if it's set the
+ *    instant a finger touches an item (as it was in the first pass), every
+ *    swipe that merely starts on an item -- i.e. scrolling past the item
+ *    reservoir on a phone -- gets captured as a drag attempt and page
+ *    scroll stops working. Real touch-drag UIs (including dnd-kit's own
+ *    TouchSensor, which the previous attempt did configure correctly on
+ *    this exact point) solve this with a short press-delay: a touch only
+ *    becomes a drag if it holds roughly in place for a brief moment, so an
+ *    immediate directional swipe is left alone for the browser to scroll.
+ *    That's reimplemented here manually via `dragListener={false}` +
+ *    `DragControls`, since Framer's declarative `drag` prop has no
+ *    built-in delay of its own. `touch-action` itself is then only ever
+ *    set to `none` once a drag has actually started (isDragging), not at
+ *    rest -- see dragInteraction.ts's PRESS_DELAY_MS / MOVE_TOLERANCE_PX
+ *    for the values and why.
  *
- * 2. Auto-scroll while dragging. Framer's `drag` doesn't scroll the page on
- *    its own, and the category zones rely on `position: sticky` to stay
- *    reachable -- which is NOT reliable here: CoursePlayer wraps every step
- *    (including this one) in a `motion.div` with an `animate` prop for the
- *    step-transition fade, and a `transform`-bearing ancestor is a known,
- *    specifically iOS-Safari-prone way for `position: sticky` descendants
- *    to misbehave. Given the original failure was reported as "mobile
- *    viewport loss" on real touch devices, that interaction is the leading
- *    suspect and not something to depend on as the only fix. So this adds
- *    an explicit auto-scroll loop during a drag (see AUTO_SCROLL_EDGE_PX
- *    below) as the primary reachability mechanism; sticky zones remain as a
- *    secondary convenience, not the only one.
+ * 2. Auto-scroll while dragging (`useAutoScrollOnDrag`). Framer's `drag`
+ *    doesn't scroll the page on its own, and the category zones rely on
+ *    `position: sticky` to stay reachable -- which is NOT reliable here:
+ *    CoursePlayer wraps every step (including this one) in a `motion.div`
+ *    with an `animate` prop for the step-transition fade, and a
+ *    `transform`-bearing ancestor is a known, specifically
+ *    iOS-Safari-prone way for `position: sticky` descendants to misbehave.
+ *    Given the original failure was reported as "mobile viewport loss" on
+ *    real touch devices, that interaction is the leading suspect and not
+ *    something to depend on as the only fix. So this adds an explicit
+ *    auto-scroll loop during a drag as the primary reachability mechanism;
+ *    sticky zones remain as a secondary convenience, not the only one.
  */
 
-// A touch that holds roughly in place for this long is a drag; one that
-// moves more than MOVE_TOLERANCE_PX before then is left alone as a native
-// scroll/pan gesture. 150ms is faster than the browser's own long-press
-// (~500ms, used for text selection/context menus) since this is a
-// deliberate in-app gesture, not an accidental hold; 8px matches typical
-// OS touch-slop thresholds (the distance a finger can drift before a touch
-// stops counting as "stationary").
-export const PRESS_DELAY_MS = 150;
-export const MOVE_TOLERANCE_PX = 8;
-
-// How close the pointer needs to be to the scroll container's visible edge
-// (in px) before auto-scroll kicks in, and the fastest it will scroll (px
-// per animation frame) right at that edge, easing to 0 at the threshold.
-export const AUTO_SCROLL_EDGE_PX = 60;
-export const AUTO_SCROLL_MAX_SPEED = 14;
-
-function getEventPoint(event: MouseEvent | TouchEvent | PointerEvent): { x: number; y: number } {
-  // The DOM Touch interface has clientX/clientY, not x/y -- see the note on
-  // resolveCategoryAtPoint below; the same extraction is needed here for
-  // auto-scroll, so it's shared rather than duplicated.
-  const touch = 'touches' in event ? (event.touches[0] || event.changedTouches[0]) : null;
-  return touch
-    ? { x: touch.clientX, y: touch.clientY }
-    : { x: (event as MouseEvent | PointerEvent).clientX, y: (event as MouseEvent | PointerEvent).clientY };
-}
-
-function findScrollableAncestor(el: HTMLElement | null): HTMLElement | null {
-  let node = el?.parentElement || null;
-  while (node && node !== document.body) {
-    const style = window.getComputedStyle(node);
-    if ((style.overflowY === 'auto' || style.overflowY === 'scroll') && node.scrollHeight > node.clientHeight) {
-      return node;
-    }
-    node = node.parentElement;
-  }
-  return null; // no scrollable ancestor found -- fall back to the window itself
-}
 export const SortingElement = ({
     content,
     onComplete,
@@ -140,135 +112,13 @@ export const SortingElement = ({
     else categoryRefs.current.delete(cat);
   }, []);
 
-  // One DragControls instance per item, not one shared instance: a shared
-  // instance's .start() broadcasts to every subscribed `motion` component
-  // at once (that's literally how DragControls.start is implemented --
-  // `this.componentControls.forEach(...)`), which would start a drag on
-  // every item simultaneously instead of just the one actually pressed.
-  const dragControlsRef = useRef<Map<string, DragControls>>(new Map());
-  const getDragControls = useCallback((id: string): DragControls => {
-    let dc = dragControlsRef.current.get(id);
-    if (!dc) {
-      dc = new DragControls();
-      dragControlsRef.current.set(id, dc);
-    }
-    return dc;
-  }, []);
-
-  // --- AUTO-SCROLL WHILE DRAGGING (see the file-level comment for why this
-  // exists instead of relying on `position: sticky` alone). ---
-  const scrollContainerRef = useRef<HTMLElement | null>(null);
-  const pointerYRef = useRef<number | null>(null);
-  const autoScrollFrameRef = useRef<number | null>(null);
-
-  const runAutoScroll = useCallback(() => {
-    const y = pointerYRef.current;
-    if (y == null) {
-      autoScrollFrameRef.current = null;
-      return;
-    }
-    const container = scrollContainerRef.current;
-    const rect = container ? container.getBoundingClientRect() : { top: 0, bottom: window.innerHeight };
-    let speed = 0;
-    if (y < rect.top + AUTO_SCROLL_EDGE_PX) {
-      speed = -AUTO_SCROLL_MAX_SPEED * (1 - Math.max(0, y - rect.top) / AUTO_SCROLL_EDGE_PX);
-    } else if (y > rect.bottom - AUTO_SCROLL_EDGE_PX) {
-      speed = AUTO_SCROLL_MAX_SPEED * (1 - Math.max(0, rect.bottom - y) / AUTO_SCROLL_EDGE_PX);
-    }
-    if (speed !== 0) {
-      if (container) container.scrollBy(0, speed);
-      else window.scrollBy(0, speed);
-    }
-    autoScrollFrameRef.current = requestAnimationFrame(runAutoScroll);
-  }, []);
-
-  const startAutoScroll = (originEl: HTMLElement) => {
-    scrollContainerRef.current = findScrollableAncestor(originEl);
-    if (autoScrollFrameRef.current == null) {
-      autoScrollFrameRef.current = requestAnimationFrame(runAutoScroll);
-    }
-  };
-
-  const stopAutoScroll = () => {
-    pointerYRef.current = null;
-    if (autoScrollFrameRef.current != null) {
-      cancelAnimationFrame(autoScrollFrameRef.current);
-      autoScrollFrameRef.current = null;
-    }
-  };
-
-  useEffect(() => () => stopAutoScroll(), []);
-
-  // --- PRESS-DELAY DRAG ACTIVATION (see the file-level comment). A plain
-  // tap/click still reaches framer's own onTap unaffected -- this only
-  // gates when the DRAG gesture is allowed to start. ---
-  const pressStateRef = useRef<{ x: number; y: number; pointerId: number; cancelled: boolean } | null>(null);
-  const pressTimerRef = useRef<number | null>(null);
-  // Cancels + unwires whatever press is currently pending, if any -- called
-  // from a fresh pointerdown (only one pending press makes sense at a
-  // time), from the matching pointerup/cancel, and on unmount, so a press
-  // that never resolved (e.g. the component unmounts mid-press-delay)
-  // can't leave a stale window listener or a timer that later fires
-  // against a since-unmounted closure.
-  const cancelPendingPressRef = useRef<(() => void) | null>(null);
-  // Captured here, not read back from the drag-start event later, because
-  // it's unambiguous at this point (event.currentTarget IS the item's own
-  // button) -- onDragStart's own event target is framer-internal and not
-  // worth depending on for this.
-  const dragOriginElRef = useRef<HTMLElement | null>(null);
-
-  useEffect(() => () => cancelPendingPressRef.current?.(), []);
+  const { getDragControls, handlePointerDown: handleItemPointerDownBase, dragOriginElRef } =
+    usePressDelayDragControls<string>();
+  const { start: startAutoScroll, reportY: reportDragPointerY, stop: stopAutoScroll } = useAutoScrollOnDrag();
 
   const handleItemPointerDown = (event: React.PointerEvent, item: any) => {
     if (isFinished) return;
-    cancelPendingPressRef.current?.(); // only one pending press at a time
-    dragOriginElRef.current = event.currentTarget as HTMLElement;
-    const { clientX, clientY, pointerId } = event;
-    const state = { x: clientX, y: clientY, pointerId, cancelled: false };
-    pressStateRef.current = state;
-
-    const cleanup = () => {
-      window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup', onUp);
-      window.removeEventListener('pointercancel', onUp);
-      cancelPendingPressRef.current = null;
-    };
-    const cancelPress = () => {
-      state.cancelled = true;
-      if (pressTimerRef.current != null) {
-        window.clearTimeout(pressTimerRef.current);
-        pressTimerRef.current = null;
-      }
-      cleanup();
-    };
-    const onMove = (moveEvent: PointerEvent) => {
-      if (moveEvent.pointerId !== state.pointerId || state.cancelled) return;
-      const dx = moveEvent.clientX - state.x;
-      const dy = moveEvent.clientY - state.y;
-      // Past this, treat it as a scroll/pan gesture, not a drag attempt --
-      // leave it alone so the browser's native scrolling handles it.
-      if (Math.hypot(dx, dy) > MOVE_TOLERANCE_PX) cancelPress();
-    };
-    // Any release/cancel clears the pending press, not just one matching
-    // this exact pointerId -- there's only ever one press pending per
-    // component (a fresh pointerdown cancels any prior one above), so
-    // requiring an exact pointerId match here only added a way for a
-    // synthetic test harness (or a browser quirk) issuing a differently
-    // numbered pointerup to leave this timer armed with nothing left to
-    // legitimately cancel it.
-    const onUp = () => cancelPress();
-
-    window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onUp);
-    window.addEventListener('pointercancel', onUp);
-    cancelPendingPressRef.current = cancelPress;
-
-    pressTimerRef.current = window.setTimeout(() => {
-      pressTimerRef.current = null;
-      if (state.cancelled) return;
-      cleanup();
-      getDragControls(item.id).start(event, { snapToCursor: false });
-    }, PRESS_DELAY_MS);
+    handleItemPointerDownBase(event, item.id);
   };
 
   useEffect(() => {
@@ -329,14 +179,8 @@ export const SortingElement = ({
   // with getBoundingClientRect() (viewport-relative) regardless of scroll
   // position. Works for mouse, pointer and touch events: touch events
   // carry coordinates on touches/changedTouches, not directly on the event.
-  const resolveCategoryAtPoint = (event: MouseEvent | TouchEvent | PointerEvent): string | null => {
-    const point = getEventPoint(event);
-    for (const [cat, el] of categoryRefs.current) {
-      const r = el.getBoundingClientRect();
-      if (point.x >= r.left && point.x <= r.right && point.y >= r.top && point.y <= r.bottom) return cat;
-    }
-    return null;
-  };
+  const resolveCategoryAtPoint = (event: MouseEvent | TouchEvent | PointerEvent): string | null =>
+    resolveTargetAtPoint(categoryRefs.current, getEventPoint(event));
 
   const handleDragStart = (item: any) => {
     if (isFinished) return;
@@ -348,7 +192,7 @@ export const SortingElement = ({
 
   const handleDrag = (event: MouseEvent | TouchEvent | PointerEvent) => {
     const point = getEventPoint(event);
-    pointerYRef.current = point.y;
+    reportDragPointerY(point.y);
     const cat = resolveCategoryAtPoint(event);
     setHoveredCategory((prev) => (prev === cat ? prev : cat)); // only re-render on an actual zone change
   };

@@ -29,11 +29,40 @@ export const SORTING_ELEMENT_MESSAGES = {
   },
 };
 
-export function renderWithIntl(ui: React.ReactElement) {
+// Keep in sync with xr2train-lms/src/messages/en.json's "FillBlanksElement"
+// section, same rationale as SORTING_ELEMENT_MESSAGES above.
+export const FILL_BLANKS_MESSAGES = {
+  FillBlanksElement: {
+    interactionHint: 'Drag each word into a blank (or tap a word, then tap a blank).',
+    correct: 'Correct',
+    protocolBreach: 'Not Quite Right',
+    resetInteraction: 'Try Again',
+    tapSlot: 'Tap to fill',
+    availableOptions: 'Word Bank',
+    checkAnswers: 'Check Answers',
+    wordAriaLabel: '{word}, draggable word',
+    placedWordAriaLabel: '{word}, placed in blank {number}. Activate to remove.',
+    blankAriaLabel: 'Blank {number}, drop zone',
+    bankAriaLabel: 'Word bank, drop zone',
+    announcePickedUp: '{word} picked up',
+    announcePlaced: '{word} placed in blank {number}',
+    announceRemoved: '{word} returned to the word bank',
+    announceCancelled: '{word} placement cancelled',
+    announceOverBlank: 'Over blank {number}',
+    announceOverBank: 'Over word bank',
+  },
+};
+
+const ALL_MESSAGES = { ...SORTING_ELEMENT_MESSAGES, ...FILL_BLANKS_MESSAGES };
+
+export function renderWithIntl(ui: React.ReactElement, opts?: { locale?: string; dir?: 'ltr' | 'rtl' }) {
+  const locale = opts?.locale ?? 'en';
   return render(
-    <NextIntlClientProvider locale="en" messages={SORTING_ELEMENT_MESSAGES}>
-      {ui}
-    </NextIntlClientProvider>
+    <div dir={opts?.dir ?? 'ltr'}>
+      <NextIntlClientProvider locale={locale} messages={ALL_MESSAGES}>
+        {ui}
+      </NextIntlClientProvider>
+    </div>
   );
 }
 
