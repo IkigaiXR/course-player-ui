@@ -50,3 +50,18 @@ export function stubRect(el: Element, rect: { left: number; top: number; right: 
     toJSON() { return this; },
   });
 }
+
+/** Makes an element look like a scrollable ancestor to
+ * findScrollableAncestor (overflow-y + scrollHeight > clientHeight), none
+ * of which jsdom computes from real layout -- plus a rect for the
+ * auto-scroll edge-distance check, and a spy-able scrollBy. */
+export function stubScrollable(
+  el: HTMLElement,
+  opts: { top: number; bottom: number; scrollHeight?: number; clientHeight?: number }
+) {
+  el.style.overflowY = 'auto';
+  Object.defineProperty(el, 'scrollHeight', { configurable: true, value: opts.scrollHeight ?? 2000 });
+  Object.defineProperty(el, 'clientHeight', { configurable: true, value: opts.clientHeight ?? 600 });
+  stubRect(el, { left: 0, top: opts.top, right: 800, bottom: opts.bottom });
+  el.scrollBy = () => {};
+}

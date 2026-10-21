@@ -3,8 +3,34 @@ import { describe, it, expect, vi } from 'vitest';
 import { screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { axe } from 'jest-axe';
-import { SortingElement } from './SortingElement';
-import { renderWithIntl, stubRect } from './test/testUtils';
+import { SortingElement, PRESS_DELAY_MS } from './SortingElement';
+import { renderWithIntl, stubRect, stubScrollable } from './test/testUtils';
+
+// A real wait longer than the component's own press-delay threshold --
+// needed because the drag-activation gate is time-based (see
+// SortingElement's file-level comment on press-delay drag activation), not
+// something fake timers can stand in for here without also faking
+// framer-motion's and user-event's own internal timing.
+const PAST_PRESS_DELAY_MS = PRESS_DELAY_MS + 60;
+
+// Moves the pointer through several intermediate samples, each separated by
+// a real ~1-frame delay, instead of one or two 0ms-apart jumps. Framer's
+// `dragControls.start()` (how this component now activates a drag, after
+// the press-delay) sets up its own internal pointermove tracking at the
+// moment it's called; firing the next pointermove on the very same tick
+// with no real gap between them occasionally outran that setup under
+// jsdom/Node's own event-loop timing, intermittently causing the drag
+// never to be recognized as started at all (confirmed by this being the
+// only failure mode seen across repeated 10-run batches -- not a different
+// test, not a different assertion, always this exact "drag never
+// completed" shape). Several smaller steps with a real gap between each is
+// more representative of how a real pointer reports movement anyway.
+async function dispatchDragMoves(pointerId: number, points: Array<{ x: number; y: number }>, pointerType?: string) {
+  for (const p of points) {
+    fireEvent.pointerMove(window, { pointerId, pointerType, clientX: p.x, clientY: p.y });
+    await new Promise((r) => setTimeout(r, 16));
+  }
+}
 
 const content = {
   instruction: 'Sort the items',
@@ -35,13 +61,26 @@ async function waitForRemoved(name: RegExp) {
   await waitFor(() => expect(screen.queryByRole('button', { name })).not.toBeInTheDocument(), { timeout: 5000 });
 }
 
+// Clicks an item and waits for the tap-selection to actually land
+// (aria-pressed=true) before returning, instead of just awaiting
+// user.click() itself. Needed because framer's own onTap gesture can
+// complete its state update a tick after user.click() resolves -- traced
+// via a debug run where this component's own click handling was already
+// clean every time, so immediately clicking a category next (the natural
+// following step) can race ahead of a selection that hasn't landed yet and
+// silently no-op (handleBucketAssign's own `if (!selectedItem) return`).
+async function selectItem(user: ReturnType<typeof userEvent.setup>, el: HTMLElement) {
+  await user.click(el);
+  await waitFor(() => expect(el).toHaveAttribute('aria-pressed', 'true'));
+}
+
 describe('SortingElement — tap-to-select-then-tap-to-assign', () => {
   it('assigns an item to its correct category on tap, and removes it from the reservoir', async () => {
     const user = userEvent.setup();
     renderStep();
 
     const apple = screen.getByRole('button', { name: /Apple/ });
-    await user.click(apple);
+    await selectItem(user, apple);
     const fruitZone = screen.getByRole('button', { name: /Fruit category/ });
     await user.click(fruitZone);
 
@@ -55,7 +94,7 @@ describe('SortingElement — tap-to-select-then-tap-to-assign', () => {
     renderStep();
 
     const apple = screen.getByRole('button', { name: /Apple/ });
-    await user.click(apple);
+    await selectItem(user, apple);
     const vegetableZone = screen.getByRole('button', { name: /Vegetable category/ });
     await user.click(vegetableZone);
 
@@ -83,9 +122,15 @@ describe('SortingElement — tap-to-select-then-tap-to-assign', () => {
     renderStep();
     const apple = screen.getByRole('button', { name: /Apple/ });
     await user.click(apple);
-    expect(apple).toHaveAttribute('aria-pressed', 'true');
+    await waitFor(() => expect(apple).toHaveAttribute('aria-pressed', 'true'));
     await user.click(apple);
-    expect(apple).toHaveAttribute('aria-pressed', 'false');
+    // Not a synchronous assertion: framer's own tap-gesture state update
+    // can land a tick after user.click() resolves (confirmed via a debug
+    // trace -- this component's own press/cancel handling was clean on
+    // both clicks every time; the race is between user-event's resolution
+    // and framer's internal onTap completion, not anything this PR
+    // touches), same as every other state-driven assertion in this file.
+    await waitFor(() => expect(apple).toHaveAttribute('aria-pressed', 'false'));
   });
 
   it('fires onComplete only once every item has been correctly placed', async () => {
@@ -96,13 +141,13 @@ describe('SortingElement — tap-to-select-then-tap-to-assign', () => {
       ['Apple', 'Fruit'], ['Carrot', 'Vegetable'], ['Banana', 'Fruit'],
     ];
     for (const [item, category] of placements) {
-      await user.click(screen.getByRole('button', { name: new RegExp(item) }));
+      await selectItem(user, screen.getByRole('button', { name: new RegExp(item) }));
       await user.click(screen.getByRole('button', { name: new RegExp(`${category} category`) }));
       await waitForRemoved(new RegExp(item));
     }
     expect(onComplete).not.toHaveBeenCalled();
 
-    await user.click(screen.getByRole('button', { name: /Potato/ }));
+    await selectItem(user, screen.getByRole('button', { name: /Potato/ }));
     await user.click(screen.getByRole('button', { name: /Vegetable category/ }));
     await waitFor(() => expect(onComplete).toHaveBeenCalledTimes(1), { timeout: 5000 });
     expect(screen.getByText('Well Done!')).toBeInTheDocument();
@@ -168,19 +213,16 @@ describe('SortingElement — drag', () => {
 
     const start = apple.getBoundingClientRect();
     fireEvent.pointerDown(apple, { pointerId: 1, clientX: start.left + 5, clientY: start.top + 5, button: 0 });
-    await new Promise((r) => setTimeout(r, 0));
-    // Move in two steps, past the zone's rect and framer-motion's own
-    // drag-start threshold, then release inside the zone. A single large
-    // jump from pointerdown straight to the release point is not how a
-    // real drag reports movement (framer-motion's gesture engine processes
-    // pointermove deltas, and seems to need at least one intermediate
-    // sample between down and up to register the gesture as a drag at
-    // all under jsdom -- a single down/up pair with no intervening move
-    // reads as a tap, not a drag, regardless of final coordinates).
-    fireEvent.pointerMove(window, { pointerId: 1, clientX: 300, clientY: 300 });
-    await new Promise((r) => setTimeout(r, 0));
-    fireEvent.pointerMove(window, { pointerId: 1, clientX: 600, clientY: 600 });
-    await new Promise((r) => setTimeout(r, 0));
+    // Press-delay drag activation: a real drag only starts once this
+    // element's pointerdown has held roughly in place for PRESS_DELAY_MS --
+    // see the file-level comment in SortingElement.tsx. Moving immediately
+    // (the old version of this test) now reads as a scroll/pan gesture and
+    // never starts a drag at all.
+    await new Promise((r) => setTimeout(r, PAST_PRESS_DELAY_MS));
+    // Move through several steps, past the zone's rect and framer-motion's
+    // own drag-start threshold, then release inside the zone -- see
+    // dispatchDragMoves for why several real-gapped steps, not one big jump.
+    await dispatchDragMoves(1, [{ x: 150, y: 150 }, { x: 300, y: 300 }, { x: 450, y: 450 }, { x: 600, y: 600 }]);
     fireEvent.pointerUp(window, { pointerId: 1, clientX: 600, clientY: 600 });
 
     expect(await screen.findByText('Correct', {}, { timeout: 3000 })).toBeInTheDocument();
@@ -197,16 +239,76 @@ describe('SortingElement — drag', () => {
 
     const start = apple.getBoundingClientRect();
     fireEvent.pointerDown(apple, { pointerId: 2, clientX: start.left + 5, clientY: start.top + 5, button: 0 });
-    await new Promise((r) => setTimeout(r, 0));
-    fireEvent.pointerMove(window, { pointerId: 2, clientX: 4500, clientY: 4500 });
-    await new Promise((r) => setTimeout(r, 0));
-    fireEvent.pointerMove(window, { pointerId: 2, clientX: 9000, clientY: 9000 });
-    await new Promise((r) => setTimeout(r, 0));
+    await new Promise((r) => setTimeout(r, PAST_PRESS_DELAY_MS));
+    await dispatchDragMoves(2, [{ x: 2250, y: 2250 }, { x: 4500, y: 4500 }, { x: 6750, y: 6750 }, { x: 9000, y: 9000 }]);
     fireEvent.pointerUp(window, { pointerId: 2, clientX: 9000, clientY: 9000 });
 
     // Give any pending state updates a tick, then confirm Apple is still there.
     await new Promise((r) => setTimeout(r, 50));
     expect(screen.getByRole('button', { name: /Apple/ })).toBeInTheDocument();
+  });
+
+  it('the touch path (pointerType "touch") drags and assigns identically to mouse/default pointer input', async () => {
+    renderStep();
+    const carrot = screen.getByRole('button', { name: /Carrot/ });
+    const vegZone = screen.getByRole('button', { name: /Vegetable category/ });
+    stubRect(vegZone, { left: 500, top: 500, right: 700, bottom: 700 });
+
+    const start = carrot.getBoundingClientRect();
+    fireEvent.pointerDown(carrot, {
+      pointerId: 3, pointerType: 'touch', clientX: start.left + 5, clientY: start.top + 5, button: 0,
+    });
+    await new Promise((r) => setTimeout(r, PAST_PRESS_DELAY_MS));
+    await dispatchDragMoves(3, [{ x: 150, y: 150 }, { x: 300, y: 300 }, { x: 450, y: 450 }, { x: 600, y: 600 }], 'touch');
+    fireEvent.pointerUp(window, { pointerId: 3, pointerType: 'touch', clientX: 600, clientY: 600 });
+
+    expect(await screen.findByText('Correct', {}, { timeout: 3000 })).toBeInTheDocument();
+    await waitForRemoved(/Carrot/);
+  });
+
+  it('a quick swipe past the movement tolerance before the press-delay elapses does not start a drag (left for the browser to scroll)', async () => {
+    renderStep();
+    const apple = screen.getByRole('button', { name: /Apple/ });
+    const start = apple.getBoundingClientRect();
+
+    fireEvent.pointerDown(apple, { pointerId: 4, clientX: start.left + 5, clientY: start.top + 5, button: 0 });
+    // Move well past MOVE_TOLERANCE_PX (8px) immediately -- before
+    // PRESS_DELAY_MS has elapsed. This should read as a scroll/pan intent,
+    // not a drag: the pending press is cancelled.
+    fireEvent.pointerMove(window, { pointerId: 4, clientX: start.left + 5, clientY: start.top + 200 });
+    fireEvent.pointerUp(window, { pointerId: 4, clientX: start.left + 5, clientY: start.top + 200 });
+    // Even past when the press-delay would otherwise have fired, nothing
+    // should have started a drag (no draggingId => item never leaves,
+    // aria-pressed never flips to selected either, since drag and tap-select
+    // are mutually exclusive and this was neither).
+    await new Promise((r) => setTimeout(r, PAST_PRESS_DELAY_MS));
+    expect(screen.getByRole('button', { name: /Apple/ })).toBeInTheDocument();
+    expect(apple).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('auto-scrolls the nearest scrollable ancestor when dragging near its bottom edge', async () => {
+    const { container } = renderWithIntl(
+      <div style={{ overflowY: 'auto' }} data-testid="scroll-container">
+        <SortingElement content={content} enrollmentId="enrollment-1" stepId="step-1" />
+      </div>
+    );
+    const scrollContainer = screen.getByTestId('scroll-container');
+    stubScrollable(scrollContainer, { top: 0, bottom: 400 });
+    const scrollBySpy = vi.spyOn(scrollContainer, 'scrollBy');
+
+    const apple = screen.getByRole('button', { name: /Apple/ });
+    const start = apple.getBoundingClientRect();
+    fireEvent.pointerDown(apple, { pointerId: 5, clientX: start.left + 5, clientY: start.top + 5, button: 0 });
+    await new Promise((r) => setTimeout(r, PAST_PRESS_DELAY_MS));
+    // Within AUTO_SCROLL_EDGE_PX (60px) of the stubbed container's bottom
+    // edge (y=400) -- should trigger the auto-scroll loop.
+    fireEvent.pointerMove(window, { pointerId: 5, clientX: 50, clientY: 370 });
+
+    await waitFor(() => expect(scrollBySpy).toHaveBeenCalled(), { timeout: 2000 });
+    const [, dy] = scrollBySpy.mock.calls[0];
+    expect(dy).toBeGreaterThan(0); // scrolling down, toward the dragged-near edge
+
+    fireEvent.pointerUp(window, { pointerId: 5, clientX: 50, clientY: 370 });
   });
 });
 
@@ -234,7 +336,10 @@ describe('SortingElement — accessibility', () => {
     renderStep();
     const apple = screen.getByRole('button', { name: /Apple/ });
     await user.click(apple);
-    expect(screen.getByText('Apple picked up')).toBeInTheDocument();
+    // Same class of race as the deselect test above: framer's own onTap
+    // completion (and the resulting setAnnouncement) can land a tick after
+    // user.click() resolves -- wait for it rather than asserting inline.
+    await waitFor(() => expect(screen.getByText('Apple picked up')).toBeInTheDocument());
 
     await user.click(screen.getByRole('button', { name: /Fruit category/ }));
     await waitFor(() => expect(screen.getByText('Apple placed correctly in Fruit')).toBeInTheDocument());
