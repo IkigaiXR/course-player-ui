@@ -19,6 +19,7 @@ import {
   resolveTargetAtPoint,
   useAutoScrollOnDrag,
   usePressDelayDragControls,
+  useScrollLockWhileDragging,
 } from './dragInteraction';
 
 /**
@@ -62,10 +63,21 @@ import {
  *    immediate directional swipe is left alone for the browser to scroll.
  *    That's reimplemented here manually via `dragListener={false}` +
  *    `DragControls`, since Framer's declarative `drag` prop has no
- *    built-in delay of its own. `touch-action` itself is then only ever
- *    set to `none` once a drag has actually started (isDragging), not at
- *    rest -- see dragInteraction.ts's PRESS_DELAY_MS / MOVE_TOLERANCE_PX
- *    for the values and why.
+ *    built-in delay of its own -- see dragInteraction.ts's
+ *    PRESS_DELAY_MS / MOVE_TOLERANCE_PX for the values and why.
+ *
+ *    `touch-action` itself stays at its default ('auto') always, even
+ *    once a drag has started -- an earlier version of this toggled it to
+ *    'none' reactively, which doesn't work: touch-action is read by the
+ *    browser's compositor at the start of the touch sequence, and
+ *    changing it after the fact has no effect on the gesture already in
+ *    progress (on real iOS/Android the page could still pan and the
+ *    browser would fire pointercancel, killing the drag -- caught in
+ *    review, not by any test, since jsdom doesn't model touch-action's
+ *    compositor-level timing). Native scrolling is blocked during an
+ *    active drag by `useScrollLockWhileDragging`'s own non-passive
+ *    `touchmove` listener instead, which also handles `pointercancel`
+ *    explicitly so nothing is left visually stuck mid-drag.
  *
  * 2. Auto-scroll while dragging (`useAutoScrollOnDrag`). Framer's `drag`
  *    doesn't scroll the page on its own, and the category zones rely on
@@ -115,6 +127,20 @@ export const SortingElement = ({
   const { getDragControls, handlePointerDown: handleItemPointerDownBase, dragOriginElRef } =
     usePressDelayDragControls<string>();
   const { start: startAutoScroll, reportY: reportDragPointerY, stop: stopAutoScroll } = useAutoScrollOnDrag();
+  // Tracks the item currently being dragged, for the forced-cancel
+  // announcement below -- draggingId (state) identifies it, but a ref is
+  // what a pointercancel handler (registered once per drag, outside
+  // React's render cycle) needs to read without going stale.
+  const draggingItemRef = useRef<any>(null);
+  const { start: startScrollLock, stop: stopScrollLock } = useScrollLockWhileDragging(() => {
+    // Same effect as a drag release with no valid drop target -- see
+    // handleDragEnd below, which this intentionally mirrors.
+    const item = draggingItemRef.current;
+    setDraggingId(null);
+    setHoveredCategory(null);
+    stopAutoScroll();
+    if (item) setAnnouncement(t('announceCancelled', { item: item.text }));
+  });
 
   const handleItemPointerDown = (event: React.PointerEvent, item: any) => {
     if (isFinished) return;
@@ -184,10 +210,12 @@ export const SortingElement = ({
 
   const handleDragStart = (item: any) => {
     if (isFinished) return;
+    draggingItemRef.current = item;
     setDraggingId(item.id);
     setSelectedItem(null); // drag and tap-select are mutually exclusive states
     setAnnouncement(t('announcePickedUp', { item: item.text }));
     if (dragOriginElRef.current) startAutoScroll(dragOriginElRef.current);
+    startScrollLock();
   };
 
   const handleDrag = (event: MouseEvent | TouchEvent | PointerEvent) => {
@@ -213,6 +241,7 @@ export const SortingElement = ({
     setDraggingId(null);
     setHoveredCategory(null);
     stopAutoScroll();
+    stopScrollLock();
     if (cat) {
       handleAssign(item, cat);
     } else {
@@ -447,11 +476,15 @@ export const SortingElement = ({
                 style={{
                   fontSize: type.body.fontSize,
                   transitionDuration: '200ms',
-                  // Only block native scrolling once a drag has actually
-                  // started -- see the file-level comment (press-delay
-                  // drag activation). At rest this is 'auto' so a swipe
-                  // starting on an item still scrolls the page normally.
-                  touchAction: isDragging ? 'none' : 'auto',
+                  // Always 'auto' -- NOT toggled to 'none' once dragging.
+                  // touch-action is read by the browser's compositor at
+                  // the start of the touch sequence; changing it
+                  // reactively, after the fact, has no effect on a
+                  // gesture already in progress (caught in review). Native
+                  // scrolling is blocked during an active drag by
+                  // useScrollLockWhileDragging's own non-passive touchmove
+                  // listener instead -- see dragInteraction.ts.
+                  touchAction: 'auto',
                   opacity: isDragging ? 0.4 : 1,
                   ...(isSelected
                     ? {

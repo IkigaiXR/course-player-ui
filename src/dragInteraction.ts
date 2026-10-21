@@ -121,6 +121,74 @@ export function useAutoScrollOnDrag() {
   return { start, reportY, stop };
 }
 
+/**
+ * Blocks native touch-scrolling while a drag is active -- WITHOUT relying
+ * on toggling the CSS `touch-action` property reactively. That doesn't
+ * work: `touch-action` is read by the browser's compositor at the start
+ * of the touch sequence (pointerdown/touchstart), and changing it later
+ * (e.g. once press-delay has elapsed and a drag has actually begun) has no
+ * effect on the gesture already in progress -- on real iOS/Android the
+ * page can still pan, and the browser will fire `pointercancel` once it
+ * claims the touch for its own scroll gesture, killing the drag outright.
+ * (This was the actual, real bug behind this module's earlier
+ * `touchAction: isDragging ? 'none' : 'auto'` -- caught in review, not by
+ * any test, since jsdom doesn't model touch-action's compositor-level
+ * timing at all.)
+ *
+ * The fix used everywhere else this problem comes up (reactive, scoped
+ * scroll-blocking without a static touch-action: none): leave touch-action
+ * at its default, and instead attach a non-passive `touchmove` listener on
+ * `document` the moment a drag actually starts, calling preventDefault()
+ * on every touchmove for as long as the drag is active, then remove it on
+ * drag end. `{ passive: false }` is required -- a passive listener can't
+ * call preventDefault at all. This only affects touch input (a mouse drag
+ * never dispatches touchmove events), so it doesn't need to branch on
+ * device type.
+ *
+ * `pointercancel` during an ACTIVE drag (e.g. the OS claims the gesture
+ * for something else anyway, a notification pull-down, multi-touch, etc.)
+ * is handled explicitly here too, independently of whatever the
+ * component's own onDragEnd prop does: `onForceEnd` runs the same
+ * cleanup as a normal drag-end-with-no-target (reset dragging state, stop
+ * auto-scroll, announce cancelled) so nothing is left visually "stuck"
+ * mid-drag. Framer Motion's own PanSession does also route pointercancel
+ * through its onDragEnd callback, so this can run in addition to that
+ * without issue -- the consumer's cleanup is idempotent (setting already-
+ * null state again, stopping an already-stopped auto-scroll).
+ */
+export function useScrollLockWhileDragging(onForceEnd: () => void) {
+  const onForceEndRef = useRef(onForceEnd);
+  onForceEndRef.current = onForceEnd;
+
+  const sessionRef = useRef<{ preventTouchMove: (e: TouchEvent) => void; handleCancel: () => void } | null>(null);
+
+  const stop = useCallback(() => {
+    const session = sessionRef.current;
+    if (!session) return;
+    document.removeEventListener('touchmove', session.preventTouchMove);
+    document.removeEventListener('pointercancel', session.handleCancel);
+    sessionRef.current = null;
+  }, []);
+
+  const start = useCallback(() => {
+    if (sessionRef.current) return; // a session is already active
+    const preventTouchMove = (e: TouchEvent) => {
+      if (e.cancelable) e.preventDefault();
+    };
+    const handleCancel = () => {
+      stop();
+      onForceEndRef.current();
+    };
+    sessionRef.current = { preventTouchMove, handleCancel };
+    document.addEventListener('touchmove', preventTouchMove, { passive: false });
+    document.addEventListener('pointercancel', handleCancel);
+  }, [stop]);
+
+  useEffect(() => stop, [stop]);
+
+  return { start, stop };
+}
+
 /** Press-delay + movement-tolerance drag activation, with one DragControls
  * instance per draggable key -- a single shared instance's .start()
  * broadcasts to every subscribed `motion` component at once (that's

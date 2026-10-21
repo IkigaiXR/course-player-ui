@@ -11,6 +11,7 @@ import {
   resolveTargetAtPoint,
   useAutoScrollOnDrag,
   usePressDelayDragControls,
+  useScrollLockWhileDragging,
 } from './dragInteraction';
 
 type BankEntry = { id: string; text: string };
@@ -178,6 +179,19 @@ export const FillBlanksElement = ({
   const { getDragControls, handlePointerDown: handlePointerDownBase, dragOriginElRef } =
     usePressDelayDragControls<string>();
   const { start: startAutoScroll, reportY: reportDragPointerY, stop: stopAutoScroll } = useAutoScrollOnDrag();
+  // See SortingElement.tsx's draggingItemRef for why this is a ref, not
+  // just the draggingId state -- a pointercancel handler registered once
+  // per drag (outside React's render cycle) needs this without going stale.
+  const draggingEntryRef = useRef<BankEntry | null>(null);
+  const { start: startScrollLock, stop: stopScrollLock } = useScrollLockWhileDragging(() => {
+    // Same effect as a drag release with no valid drop target -- see
+    // handleDragEnd's final `else` branch below, which this mirrors.
+    const entry = draggingEntryRef.current;
+    setDraggingId(null);
+    setHoveredZone(null);
+    stopAutoScroll();
+    if (entry) setAnnouncement(t('announceCancelled', { word: entry.text }));
+  });
 
   const handleWordPointerDown = (event: React.PointerEvent, entry: BankEntry) => {
     if (isFinished) return;
@@ -189,10 +203,12 @@ export const FillBlanksElement = ({
 
   const handleDragStart = (entry: BankEntry) => {
     if (isFinished) return;
+    draggingEntryRef.current = entry;
     setDraggingId(entry.id);
     setSelected(null); // drag and tap-select are mutually exclusive states
     setAnnouncement(t('announcePickedUp', { word: entry.text }));
     if (dragOriginElRef.current) startAutoScroll(dragOriginElRef.current);
+    startScrollLock();
   };
 
   const handleDrag = (event: MouseEvent | TouchEvent | PointerEvent) => {
@@ -214,6 +230,7 @@ export const FillBlanksElement = ({
     setDraggingId(null);
     setHoveredZone(null);
     stopAutoScroll();
+    stopScrollLock();
     if (zone === 'bank') {
       if (origin.type === 'slot') {
         moveWord(entry, origin, { type: 'bank' });
@@ -309,7 +326,11 @@ export const FillBlanksElement = ({
             : 'inline-flex items-center gap-2 font-bold text-lg md:text-2xl select-none cursor-grab active:cursor-grabbing min-h-11 bg-transparent border-none'
         }
         style={{
-          touchAction: isDragging ? 'none' : 'auto',
+          // Always 'auto' -- see SortingElement.tsx / dragInteraction.ts's
+          // useScrollLockWhileDragging for why this can't be toggled
+          // reactively (touch-action is read at touch-sequence start by
+          // the browser's compositor, not re-evaluated mid-gesture).
+          touchAction: 'auto',
           opacity: isDragging ? 0.4 : 1,
           ...(variant === 'bank'
             ? (isSelected
