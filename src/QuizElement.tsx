@@ -1,31 +1,59 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { CheckCircle2, XCircle, ShieldCheck, ChevronRight, RotateCcw, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LMS_THEME } from './theme';
+import { seededShuffleBySeedKey } from './seededShuffle';
 
 /**
  * XR2TRAIN KNOWLEDGE CHECK (v8.7 Platinum - COMPACT VIEW)
  * Authority: LMS Portal Node (Port 3002)
  * Fix: Tightened answer blocks and reduced question sizing for viewport optimization.
  * Standard: UNTRUNCATED.
+ *
+ * Answer-position bias fix: a platform-wide scan found correct answers
+ * landing at a single option position far more often than chance (81.2%
+ * platform-wide; as high as 91.9% on specific courses) -- a predictable
+ * pattern a learner can exploit without knowing the content. Each
+ * question's options (and each option's own feedback, which must move
+ * WITH it) are now shuffled independently, seeded from
+ * enrollment + step + question id (falling back to the question's index
+ * when it has no id) + attempt -- stable within one attempt, reshuffled on
+ * retry, using the same shared seededShuffle utility SortingElement and
+ * FillBlanksElement already use (not a second implementation).
+ *
+ * Marking is shuffle-safe by construction: each option is tagged with its
+ * ORIGINAL authored index before shuffling, and that tag -- not the
+ * option's displayed position -- is what's compared against
+ * question.correctIndex. VideoElement's embedded knowledge check reuses
+ * this component directly, so "video-question shuffle" needs no separate
+ * implementation.
+ *
+ * No shuffle at all (authored order kept) when there's no identity to seed
+ * from (enrollmentId/stepId both missing, e.g. a context that genuinely
+ * has neither) -- same "don't guess" rule as the other two elements.
  */
-export const QuizElement = ({ 
-    content, 
-    template, 
-    onComplete 
-}: { 
-    content: any, 
-    template?: any, 
-    onComplete?: (score: number) => void 
+export const QuizElement = ({
+    content,
+    template,
+    onComplete,
+    enrollmentId,
+    stepId
+}: {
+    content: any,
+    template?: any,
+    onComplete?: (score: number) => void,
+    enrollmentId?: string,
+    stepId?: string
 }) => {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [correctCount, setCorrectCount] = useState(0);
   const [isAssessmentPassed, setIsAssessmentPassed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
 
   const { colors, type } = LMS_THEME;
@@ -38,7 +66,27 @@ export const QuizElement = ({
     rootRef.current?.closest('.overflow-y-auto')?.scrollTo({ top: 0 });
   }, [currentIdx]);
 
-  const questions = content.questions || [];
+  const rawQuestions = content.questions || [];
+
+  // Tag each option with its ORIGINAL authored index (and its own
+  // feedback entry, if feedback is per-option) before shuffling, so
+  // marking and feedback both survive the reorder -- "move as a unit".
+  const questions = useMemo(() => {
+    return rawQuestions.map((q: any, qIdx: number) => {
+      const questionSeedId = q?.id ?? `q${qIdx}`;
+      const taggedOptions = (q?.options || []).map((opt: string, i: number) => ({
+        originalIndex: i,
+        text: opt,
+        feedback: Array.isArray(q?.feedback) ? q.feedback[i] : undefined,
+      }));
+      const shuffledOptions = enrollmentId || stepId
+        ? seededShuffleBySeedKey(taggedOptions, { enrollmentId, stepId: stepId || 'quiz', questionId: String(questionSeedId), attempt })
+        : taggedOptions; // no identity at all (shouldn't happen in practice) -- keep authored order rather than guess
+      return { ...q, shuffledOptions };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rawQuestions, enrollmentId, stepId, attempt]);
+
   const currentQuestion = questions[currentIdx];
 
   if (!currentQuestion) return (
@@ -54,7 +102,11 @@ export const QuizElement = ({
 
   const checkAnswer = () => {
     setShowFeedback(true);
-    if (selectedIdx === currentQuestion.correctIndex) {
+    // selectedIdx is the DISPLAYED (shuffled) position -- correctness is
+    // the originally-authored index that option carries with it, not its
+    // position on screen.
+    const selectedEntry = selectedIdx !== null ? currentQuestion.shuffledOptions[selectedIdx] : null;
+    if (selectedEntry?.originalIndex === currentQuestion.correctIndex) {
         setCorrectCount(prev => prev + 1);
     }
   };
@@ -75,7 +127,8 @@ export const QuizElement = ({
     }
   };
 
-  const isUserCorrect = selectedIdx === currentQuestion.correctIndex;
+  const selectedEntry = selectedIdx !== null ? currentQuestion.shuffledOptions[selectedIdx] : null;
+  const isUserCorrect = selectedEntry?.originalIndex === currentQuestion.correctIndex;
   const finalScoreResult = Math.round((correctCount / questions.length) * 100);
 
   // --- RENDER: PASS VIEW (Simplified 'Well Done' block) ---
@@ -115,7 +168,10 @@ export const QuizElement = ({
                     {t('failMessage', { score: finalScoreResult, passScore: content.passScore || 80 })}
                 </p>
                 <button
-                    onClick={() => { setCurrentIdx(0); setSelectedIdx(null); setShowFeedback(false); setCorrectCount(0); }}
+                    onClick={() => {
+                        setCurrentIdx(0); setSelectedIdx(null); setShowFeedback(false); setCorrectCount(0);
+                        setAttempt((a) => a + 1); // new attempt -> new seed -> re-shuffled options per question
+                    }}
                     className="px-10 py-5 text-white font-black uppercase text-[10px] tracking-widest flex items-center gap-3 hover:brightness-110 transition-all shadow-xl border-none cursor-pointer leading-none"
                     style={{ backgroundColor: colors.heading }}
                 >
@@ -142,15 +198,16 @@ export const QuizElement = ({
         </h2>
       </div>
 
-      {/* 2. TIGHTENED RESPONSE MATRIX */}
+      {/* 2. TIGHTENED RESPONSE MATRIX -- displayed (shuffled) order; each
+          entry still carries its own ORIGINAL authored index for marking. */}
       <div className="grid grid-cols-1 gap-3 mb-10">
-        {currentQuestion.options.map((opt: string, i: number) => {
-          const isActuallyCorrect = i === currentQuestion.correctIndex;
+        {currentQuestion.shuffledOptions.map((entry: { originalIndex: number; text: string; feedback?: string }, i: number) => {
+          const isActuallyCorrect = entry.originalIndex === currentQuestion.correctIndex;
           const wasSelected = selectedIdx === i;
 
           return (
             <button
-              key={i}
+              key={entry.originalIndex}
               onClick={() => handleSelect(i)}
               disabled={showFeedback}
               className={`p-6 text-left border-2 transition-all flex justify-between items-center cursor-pointer
@@ -164,7 +221,7 @@ export const QuizElement = ({
               }}
             >
               <span style={{ color: colors.heading }} className="text-xl font-bold tracking-tighter leading-tight">
-                {opt}
+                {entry.text}
               </span>
               <div className="flex items-center gap-4">
                   {showFeedback && isActuallyCorrect && <CheckCircle2 className="text-emerald-600" size={28} />}
@@ -201,7 +258,13 @@ export const QuizElement = ({
                     </h4>
                 </div>
                 <p className="tracking-tight m-0" style={{ ...type.quote, color: colors.heading }}>
-                    {Array.isArray(currentQuestion.feedback) ? currentQuestion.feedback[selectedIdx as number] : currentQuestion.feedback}
+                    {/* Per-option feedback moved WITH its option during the
+                        shuffle (tagged onto the entry itself), so this reads
+                        the selected entry's own feedback -- not
+                        feedback[selectedIdx], which would be the feedback
+                        for whatever originally sat at that DISPLAYED
+                        position before shuffling. */}
+                    {selectedEntry?.feedback ?? (Array.isArray(currentQuestion.feedback) ? undefined : currentQuestion.feedback)}
                 </p>
             </div>
 

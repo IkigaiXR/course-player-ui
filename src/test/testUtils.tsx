@@ -53,7 +53,27 @@ export const FILL_BLANKS_MESSAGES = {
   },
 };
 
-const ALL_MESSAGES = { ...SORTING_ELEMENT_MESSAGES, ...FILL_BLANKS_MESSAGES };
+// Keep in sync with xr2train-lms/src/messages/en.json's "QuizElement"
+// section, same rationale as SORTING_ELEMENT_MESSAGES above.
+export const QUIZ_ELEMENT_MESSAGES = {
+  QuizElement: {
+    awaitingAssessment: 'Awaiting Assessment Data',
+    wellDone: 'Well Done!',
+    passedMessage: 'You scored {score}% — assessment passed.',
+    successRecorded: 'Success Recorded',
+    tryAgain: 'Try Again',
+    failMessage: 'You scored {score}%, below the {passScore}% pass mark.',
+    retakeQuiz: 'Retake Assessment',
+    questionCounter: 'Question {current} of {total}',
+    submit: 'Submit Answer',
+    correct: 'Correct',
+    incorrect: 'Incorrect',
+    nextQuestion: 'Next Question',
+    processFinalResult: 'View Results',
+  },
+};
+
+const ALL_MESSAGES = { ...SORTING_ELEMENT_MESSAGES, ...FILL_BLANKS_MESSAGES, ...QUIZ_ELEMENT_MESSAGES };
 
 export function renderWithIntl(ui: React.ReactElement, opts?: { locale?: string; dir?: 'ltr' | 'rtl' }) {
   const locale = opts?.locale ?? 'en';
