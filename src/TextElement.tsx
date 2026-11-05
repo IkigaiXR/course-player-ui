@@ -408,8 +408,11 @@ export const TextElement = ({
                 </section>
             )}
 
-            {/* MICRO-CHECK (Optional tap-to-reveal recall question) */}
-            {content.microCheck && (
+            {/* MICRO-CHECK (Optional tap-to-reveal recall question). Needs a
+                real question: AI-generated steps carry an empty
+                { question: '', revealText: '' } object, which used to render
+                an empty "Quick Recall" box with nothing to reveal. */}
+            {content.microCheck?.question?.trim() && (
                 <section className="mt-20 mb-20">
                     <div className="max-w-5xl p-16 shadow-inner space-y-6 border-l-[16px]" style={{ backgroundColor: colors.lightTint, borderColor: colors.accent }}>
                         <div className="flex items-center gap-3" style={{ color: colors.accent }}>
