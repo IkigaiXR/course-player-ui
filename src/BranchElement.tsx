@@ -54,7 +54,16 @@ export const BranchElement = ({
 
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(resumeValid ? resumeState!.optionId : null);
   const [subIndex, setSubIndex] = useState(resumeValid ? resumeState!.subIndex : 0);
-  const [subStepValid, setSubStepValid] = useState(false);
+  // Each sub-step's starting validity is set at the moment we move to it
+  // (here, selectOption, handleSubPrev/Next) -- never in an effect after it
+  // renders. A sub-step that completes on mount (e.g. a sequential-reveal
+  // text step with no bullets) calls onComplete from its own effect, and a
+  // child's effects run before its parent's: a reset-on-render effect here
+  // overwrote that completion every time, leaving Finish Path disabled for
+  // good (SIL362/SIL879 branch steps, 2026-11-05).
+  const [subStepValid, setSubStepValid] = useState(() =>
+    resumeValid ? isPassiveStep(resumeOption.path[resumeState!.subIndex]) : false
+  );
   const [lastSubScore, setLastSubScore] = useState<number | undefined>(undefined);
 
   // A resumeState pointer that doesn't match this content (deleted option,
@@ -72,17 +81,13 @@ export const BranchElement = ({
   const pathSteps = selectedOption?.path || [];
   const currentPathStep = pathSteps[subIndex];
 
-  useEffect(() => {
-    setSubStepValid(isPassiveStep(currentPathStep));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedOptionId, subIndex]);
-
   if (!content) return null;
 
   const selectOption = (optionId: string) => {
+    const option = options.find((o: any) => o.id === optionId);
     setSelectedOptionId(optionId);
     setSubIndex(0);
-    setSubStepValid(false);
+    setSubStepValid(isPassiveStep(option?.path?.[0]));
     onBranchProgress?.({ optionId, subIndex: 0 });
   };
 
@@ -95,6 +100,7 @@ export const BranchElement = ({
     if (subIndex === 0 || !selectedOptionId) return;
     const prevIdx = subIndex - 1;
     setSubIndex(prevIdx);
+    setSubStepValid(isPassiveStep(pathSteps[prevIdx]));
     onBranchProgress?.({ optionId: selectedOptionId, subIndex: prevIdx });
   };
 
@@ -108,6 +114,7 @@ export const BranchElement = ({
     } else {
       const nextIdx = subIndex + 1;
       setSubIndex(nextIdx);
+      setSubStepValid(isPassiveStep(pathSteps[nextIdx]));
       onBranchProgress?.({ optionId: selectedOptionId, subIndex: nextIdx });
     }
   };
@@ -175,8 +182,10 @@ export const BranchElement = ({
         </span>
       </div>
 
+      {/* Keyed per sub-step so two consecutive steps of the same type remount
+          (fresh reveal state, completion effect fires again) instead of reusing one instance. */}
       {Component ? (
-        <Component content={pathStepContent} template={template} enrollmentId={enrollmentId} onComplete={handleSubStepComplete} />
+        <Component key={`${selectedOptionId}:${subIndex}`} content={pathStepContent} template={template} enrollmentId={enrollmentId} onComplete={handleSubStepComplete} />
       ) : (
         <div className="py-20 text-center border-4 border-dashed border-slate-100 opacity-20 italic uppercase font-black text-xs">
           {t('nodePending', { type: currentPathStep.type })}
