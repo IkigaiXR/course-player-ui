@@ -16,11 +16,15 @@ import { QuizElement } from './QuizElement';
  */
 export const VideoElement = ({
   content,
-  onComplete
+  onComplete,
+  enrollmentId,
+  stepId
 }: {
   content: any,
   template?: any,
-  onComplete?: (score?: number) => void
+  onComplete?: (score?: number) => void,
+  enrollmentId?: string,
+  stepId?: string
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
@@ -125,7 +129,7 @@ export const VideoElement = ({
       {/* --- LAYER 5: OPTIONAL KNOWLEDGE CHECK --- */}
       {content.questions && content.questions.length > 0 && (
         <div className="mt-20 pt-20 border-t border-slate-100">
-          <QuizElement content={content} onComplete={onComplete} />
+          <QuizElement content={content} onComplete={onComplete} enrollmentId={enrollmentId} stepId={stepId} />
         </div>
       )}
     </div>
