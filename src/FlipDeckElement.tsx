@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { motion } from 'framer-motion';
 import { RotateCcw } from 'lucide-react';
 import { LMS_THEME } from './theme';
+import { FitText } from './FitText';
 
 /**
  * XR2TRAIN FLIP-DECK ELEMENT (v8.0 Platinum - UI ALIGNED)
@@ -94,10 +95,13 @@ export const FlipDeckElement = ({
             >
               {/* FRONT VIEW */}
               <div className="absolute inset-0 bg-white border-b-[16px] flex flex-col items-center justify-center p-10 backface-hidden group-hover:brightness-95 transition-all overflow-hidden" style={{ borderColor: colors.heading, backfaceVisibility: 'hidden' }}>
-                <div className="max-h-full overflow-y-auto custom-scrollbar">
-                  <h3 className="font-black text-center tracking-tight leading-tight" style={{ ...type.h3, color: colors.heading, margin: 0 }}>
-                      {card.front}
-                  </h3>
+                <div className="w-full max-h-full overflow-y-auto custom-scrollbar">
+                  <FitText
+                      text={card.front || ''}
+                      minPx={14}
+                      className="font-black text-center tracking-tight leading-tight"
+                      style={{ ...type.h3, color: colors.heading, margin: 0 }}
+                  />
                 </div>
                 <div className="absolute bottom-6 right-6 text-slate-100 group-hover:text-blue-600 transition-colors">
                     <RotateCcw size={20}/>

@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LMS_THEME } from './theme';
+import { FitText } from './FitText';
 
 /**
  * XR2TRAIN CAROUSEL ELEMENT (v8.0 Platinum - UI ALIGNED)
@@ -111,17 +112,17 @@ export const CarouselElement = ({
             </div>
         </div>
 
-        <div className="lg:w-1/2 p-12 lg:p-20 flex flex-col justify-center space-y-10 bg-white relative">
+        <div className="lg:w-1/2 min-w-0 p-8 md:p-12 lg:p-20 flex flex-col justify-center space-y-10 bg-white relative">
           <div className="space-y-4">
             <span style={{ ...type.label, color: colors.accent }} className="block">
                 {t('deploymentSequence')}
             </span>
-            <h3
-                className={`${titleScale} font-black uppercase leading-[0.9] tracking-tighter break-words`}
+            <FitText
+                text={slides[idx]?.title || ''}
+                minPx={24}
+                className={`${titleScale} font-black uppercase leading-[0.9] tracking-tighter`}
                 style={{ color: colors.heading }}
-            >
-                {slides[idx]?.title}
-            </h3>
+            />
           </div>
 
           <div className="relative">

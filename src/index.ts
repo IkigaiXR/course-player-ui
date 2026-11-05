@@ -1,4 +1,5 @@
 export * from './theme';
+export * from './FitText';
 export * from './GlossaryTerm';
 export * from './HotspotElement';
 export * from './CarouselElement';
