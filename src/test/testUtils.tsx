@@ -73,7 +73,15 @@ export const QUIZ_ELEMENT_MESSAGES = {
   },
 };
 
-const ALL_MESSAGES = { ...SORTING_ELEMENT_MESSAGES, ...FILL_BLANKS_MESSAGES, ...QUIZ_ELEMENT_MESSAGES };
+// Same values as this package's own src/messages/en.json "VideoElement".
+export const VIDEO_ELEMENT_MESSAGES = {
+  VideoElement: {
+    playVideo: 'Play video',
+    awaitingVideo: 'Awaiting video asset authorisation...',
+  },
+};
+
+const ALL_MESSAGES = { ...SORTING_ELEMENT_MESSAGES, ...FILL_BLANKS_MESSAGES, ...QUIZ_ELEMENT_MESSAGES, ...VIDEO_ELEMENT_MESSAGES };
 
 export function renderWithIntl(ui: React.ReactElement, opts?: { locale?: string; dir?: 'ltr' | 'rtl' }) {
   const locale = opts?.locale ?? 'en';

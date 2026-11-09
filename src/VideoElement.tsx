@@ -13,6 +13,11 @@ import { QuizElement } from './QuizElement';
  * for accessibility. If content.questions is populated, an embedded
  * knowledge check (reusing QuizElement) renders below the video, which stays
  * mounted and replayable so the learner can rewatch for reference.
+ *
+ * Image fallback (2026-11): with no videoUrl, content.imageUrl is shown in
+ * the same 16:9 stage instead; with both, the image is the video's poster.
+ * Completion is unchanged — an image never calls onComplete itself (an
+ * image-only step without questions is passive in the player's gate).
  */
 export const VideoElement = ({
   content,
@@ -55,6 +60,13 @@ export const VideoElement = ({
     setWatchedToEnd(true);
   };
 
+  const imageUrl: string | undefined = content.imageUrl || undefined;
+  const captionOverlay = content.caption && (
+    <div className="absolute bottom-0 left-0 right-0 bg-[#0B1120]/80 px-6 py-3 text-center">
+      <span className="text-white text-sm font-medium leading-relaxed">{content.caption}</span>
+    </div>
+  );
+
   return (
     <div className="animate-in fade-in duration-1000 text-left w-full pb-40">
 
@@ -95,6 +107,7 @@ export const VideoElement = ({
           <video
             ref={videoRef}
             src={content.videoUrl}
+            poster={imageUrl}
             className="w-full h-full object-cover"
             controls={playing}
             playsInline
@@ -114,11 +127,12 @@ export const VideoElement = ({
             </button>
           )}
 
-          {content.caption && (
-            <div className="absolute bottom-0 left-0 right-0 bg-[#0B1120]/80 px-6 py-3 text-center">
-              <span className="text-white text-sm font-medium leading-relaxed">{content.caption}</span>
-            </div>
-          )}
+          {captionOverlay}
+        </div>
+      ) : imageUrl ? (
+        <div className={`relative aspect-video bg-[#0B1120] ${LMS_THEME.classes.imageFrame}`}>
+          <img src={imageUrl} alt={content.imageAlt || content.caption || ''} className="w-full h-full object-cover" />
+          {captionOverlay}
         </div>
       ) : (
         <div className="p-32 border-4 border-dashed border-slate-100 text-center text-slate-200 font-black uppercase tracking-widest italic text-2xl aspect-video flex items-center justify-center">
