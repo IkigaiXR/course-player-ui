@@ -11,3 +11,6 @@ export * from './FillBlanksElement';
 export * from './FlipDeckElement';
 export * from './CloseoutElement';
 export * from './BranchElement';
+export * from './SimulationFrame';
+export * from './UnityElement';
+export * from './ArticulateElement';

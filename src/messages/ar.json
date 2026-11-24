@@ -131,5 +131,31 @@
     "quickRecall": "استرجاع سريع",
     "revealAnswer": "إظهار الإجابة",
     "note": "ملاحظة"
+  },
+  "SimulationFrame": {
+    "start": "بدء المحاكاة",
+    "minimise": "تصغير",
+    "resume": "متابعة المحاكاة",
+    "inProgress": "المحاكاة قيد التشغيل",
+    "inProgressHint": "تستمر في العمل أثناء التصغير، بما في ذلك الصوت. اضغط متابعة للاستمرار من حيث توقفت.",
+    "completed": "اكتملت المحاكاة",
+    "restart": "إعادة تشغيل المحاكاة",
+    "loading": "جارٍ تحميل المحاكاة…",
+    "focusLabel": "{title}: محاكاة"
+  },
+  "UnityElement": {
+    "loading": "جارٍ التحميل...",
+    "wellDone": "أحسنت!",
+    "assessmentOutcome": "نتيجة التقييم: تم تحديد {found} / {total} من المخاطر بشكل صحيح.",
+    "restartSimulation": "إعادة تشغيل المحاكاة",
+    "environmentReady": "البيئة الثلاثية الأبعاد جاهزة",
+    "authorisedSimulation": "محاكاة معتمدة من المستوى الرابع",
+    "activeSimulation": "محاكاة ثلاثية الأبعاد نشطة",
+    "simulationVersion": "إصدار المحاكاة: {hubUrl}"
+  },
+  "ArticulateElement": {
+    "initialisingSession": "جارٍ تحميل الجلسة التفاعلية...",
+    "sessionTitle": "جلسة تفاعلية",
+    "readyHint": "تُفتح بملء الشاشة. استخدم زر التصغير للعودة إلى الدورة في أي وقت."
   }
 }

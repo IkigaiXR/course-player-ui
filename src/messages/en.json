@@ -131,5 +131,31 @@
     "quickRecall": "Quick Recall",
     "revealAnswer": "Reveal Answer",
     "note": "Note"
+  },
+  "SimulationFrame": {
+    "start": "Start simulation",
+    "minimise": "Minimise",
+    "resume": "Resume simulation",
+    "inProgress": "Simulation in progress",
+    "inProgressHint": "It keeps running while minimised, including any sound. Resume to carry on where you left off.",
+    "completed": "Simulation completed",
+    "restart": "Restart simulation",
+    "loading": "Loading simulation…",
+    "focusLabel": "{title}: simulation"
+  },
+  "UnityElement": {
+    "loading": "Loading...",
+    "wellDone": "Well Done!",
+    "assessmentOutcome": "Assessment Outcome: {found} / {total} Hazards Identified Correctly.",
+    "restartSimulation": "Restart Simulation",
+    "environmentReady": "3D Environment Ready",
+    "authorisedSimulation": "Authorised Tier 4 Simulation",
+    "activeSimulation": "Active 3D Simulation",
+    "simulationVersion": "SSoT Simulation Version: {hubUrl}"
+  },
+  "ArticulateElement": {
+    "initialisingSession": "Initialising immersive session...",
+    "sessionTitle": "Interactive session",
+    "readyHint": "Opens full screen. Use Minimise to return to the course at any time."
   }
 }
